@@ -10,14 +10,3 @@ public class Created extends BasePackage
 	public CreatedData data;
 }
 
-class CreatedData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int id;
-	/**
-	 * The name of the room.
-	 */
-	public String name;
-}

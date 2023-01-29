@@ -10,10 +10,3 @@ public class Join extends BasePackage
 	public JoinData data;
 }
 
-class JoinData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int room;
-}

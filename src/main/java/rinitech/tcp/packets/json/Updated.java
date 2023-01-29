@@ -10,15 +10,3 @@ public class Updated extends BasePackage
 	public UpdatedData data;
 }
 
-class UpdatedData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int room;
-
-	/**
-	 * The new name of the room.
-	 */
-	public String name;
-}

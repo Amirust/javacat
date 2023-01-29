@@ -10,10 +10,3 @@ public class Deleted extends BasePackage
 	public DeletedData data;
 }
 
-class DeletedData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int room;
-}

@@ -11,7 +11,7 @@ public class MCPPacket
 {
 	private final MajorPacketType majorPacketType;
 	private final MinorPacketType minorPacketType;
-	private BasePackage data;
+	private final BasePackage data;
 
 	public MCPPacket(MajorPacketType majorPacketType, MinorPacketType minorPacketType, BasePackage data)
 	{
@@ -50,5 +50,20 @@ public class MCPPacket
 
 
 		return new MCPPacket(majorPacketType, minorPacketType, data);
+	}
+
+	public MajorPacketType getMajorPacketType()
+	{
+		return majorPacketType;
+	}
+
+	public MinorPacketType getMinorPacketType()
+	{
+		return minorPacketType;
+	}
+
+	public BasePackage getData()
+	{
+		return data;
 	}
 }

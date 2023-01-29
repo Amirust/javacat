@@ -10,15 +10,3 @@ public class Left extends BasePackage
 	public LeftData data;
 }
 
-class LeftData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int room;
-
-	/**
-	 * The username of the user.
-	 */
-	public String user;
-}

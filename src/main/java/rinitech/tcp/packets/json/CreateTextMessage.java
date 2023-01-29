@@ -11,10 +11,3 @@ public class CreateTextMessage extends BaseMessagePackage
 	public CreateTextMessageData data;
 }
 
-class CreateTextMessageData
-{
-	/**
-	 * The message.
-	 */
-	public String message;
-}

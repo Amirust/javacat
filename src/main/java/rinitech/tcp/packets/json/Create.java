@@ -10,10 +10,3 @@ public class Create extends BasePackage
 	public CreateData data;
 }
 
-class CreateData
-{
-	/**
-	 * The name of the room.
-	 */
-	public String name;
-}

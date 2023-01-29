@@ -1,7 +1,5 @@
 package rinitech.tcp.packets.json;
 
-import rinitech.tcp.Room;
-
 /**
  * List packet sends to the client when the server sends the list of rooms.
  * Data contains the list of rooms.
@@ -12,10 +10,3 @@ public class List extends BasePackage
 	public ListData data;
 }
 
-class ListData
-{
-	/**
-	 * The list of rooms.
-	 */
-	public Room[] rooms;
-}

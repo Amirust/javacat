@@ -7,17 +7,6 @@ package rinitech.tcp.packets.json;
  */
 public class Handshake extends BasePackage
 {
-	HandshakeData data;
+	public HandshakeData data;
 }
 
-class HandshakeData
-{
-	/**
-	 * The version of the MCP.
-	 */
-	public String version;
-	/**
-	 * The public key of the client.
-	 */
-	public String publicKey;
-}

@@ -10,10 +10,3 @@ public class Leave extends BasePackage
 	public LeaveData data;
 }
 
-class LeaveData
-{
-	/**
-	 * The id of the room.
-	 */
-	public int room;
-}

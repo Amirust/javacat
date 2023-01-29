@@ -10,10 +10,3 @@ public class UpdateAccessToken extends BasePackage
 	public UpdateAccessTokenData data;
 }
 
-class UpdateAccessTokenData
-{
-	/**
-	 * The access token.
-	 */
-	public String accessToken;
-}

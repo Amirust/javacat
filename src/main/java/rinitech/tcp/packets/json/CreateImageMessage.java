@@ -10,10 +10,3 @@ public class CreateImageMessage extends BaseMessagePackage
 	public CreateImageMessageData data;
 }
 
-class CreateImageMessageData
-{
-	/**
-	 * The image url.
-	 */
-	public String image;
-}

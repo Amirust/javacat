@@ -1,9 +1,16 @@
 package rinitech;
 
+import rinitech.tcp.Server;
+
 public class Main
 {
 	public static void main(String[] args)
 	{
-		System.out.println("Hello world!");
+		try {
+			Server server = new Server(3072);
+			server.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
