@@ -120,7 +120,7 @@ public class Client extends Thread
 
 	public void createUpdateAccessTokenTimer() {
 		new Thread(() -> {
-			while (true) {
+			while (!socket.isClosed()) {
 				try {
 					Thread.sleep(1000 * 60 * 60 * 24);
 					String newAccessToken = Utils.generateAccessToken(username);
