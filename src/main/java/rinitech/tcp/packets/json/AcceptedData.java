@@ -1,6 +1,6 @@
 package rinitech.tcp.packets.json;
 
-import rinitech.tcp.Room;
+import rinitech.tcp.packets.SerializableRoom;
 
 public class AcceptedData
 {
@@ -11,5 +11,5 @@ public class AcceptedData
 	/**
 	 * All available rooms in the server.
 	 */
-	public Room[] rooms = new Room[]{};
+	public SerializableRoom[] rooms = new SerializableRoom[]{};
 }

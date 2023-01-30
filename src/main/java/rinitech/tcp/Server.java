@@ -2,6 +2,7 @@ package rinitech.tcp;
 
 import rinitech.config.Config;
 import rinitech.database.DatabaseAdapter;
+import rinitech.tcp.packets.json.BasePackage;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,10 +12,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-public class Server
+public class Server extends EventEmitter<BasePackage>
 {
-	private ServerSocket serverSocket;
-	public static final ArrayList<Client> clients = new ArrayList<>();
+	private final ServerSocket serverSocket;
+	public final ArrayList<Client> clients = new ArrayList<>();
 	public static final ArrayList<Room> rooms = new ArrayList<>();
 	public DiffieHellman DH = new DiffieHellman();
 	public DatabaseAdapter database;

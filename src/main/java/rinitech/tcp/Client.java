@@ -12,7 +12,11 @@ import java.util.Scanner;
 
 import rinitech.tcp.handlers.HandleIncomingPacket;
 import rinitech.tcp.packets.MCPPacket;
+import rinitech.tcp.packets.json.UpdateAccessToken;
+import rinitech.tcp.packets.json.UpdateAccessTokenData;
+import rinitech.tcp.types.AuthenticationPacketType;
 import rinitech.tcp.types.ClientStatus;
+import rinitech.tcp.types.MajorPacketType;
 
 public class Client extends Thread
 {
@@ -24,6 +28,7 @@ public class Client extends Thread
 	private String accessToken;
 	public ClientStatus status = ClientStatus.Awaiting;
 	private final Server server;
+	public EventEmitter<MCPPacket> events = new EventEmitter<>();
 
 	public Client(Socket socket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken, Server server)
 	{
@@ -78,7 +83,6 @@ public class Client extends Thread
 
 	public void run()
 	{
-		// TODO: Create timer for send new accessToken every 10 minutes
 		try {
 			while (!socket.isClosed()) {
 				if (reader.hasNext()) {
@@ -113,4 +117,26 @@ public class Client extends Thread
 	}
 
 	public String getAccessToken() { return accessToken; }
+
+	public void createUpdateAccessTokenTimer() {
+		new Thread(() -> {
+			while (true) {
+				try {
+					Thread.sleep(1000 * 60 * 60 * 24);
+					String newAccessToken = Utils.generateAccessToken(username);
+					UpdateAccessToken updateAccessToken = new UpdateAccessToken();
+					updateAccessToken.data = new UpdateAccessTokenData();
+					updateAccessToken.data.accessToken = newAccessToken;
+					MCPPacket packet = new MCPPacket(
+							MajorPacketType.Authentication,
+							AuthenticationPacketType.UpdateAccessToken,
+							updateAccessToken
+					);
+					send(packet, true);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+	}
 }
