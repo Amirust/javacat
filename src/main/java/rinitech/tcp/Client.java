@@ -19,7 +19,7 @@ public class Client extends Thread
 	private final Socket socket;
 	private final Scanner reader;
 	private final PrintWriter writer;
-	private String username;
+	public String username;
 	private SecretKey secretKey;
 	private String accessToken;
 	public ClientStatus status = ClientStatus.Awaiting;
@@ -58,19 +58,39 @@ public class Client extends Thread
 	{
 		Scanner reader = new Scanner(socket.getInputStream());
 		PrintWriter writer = new PrintWriter(socket.getOutputStream());
-		socket.setKeepAlive(true);
 
 		return new Client(socket, null, reader, writer, null, null, server);
 	}
 
+	public void send(MCPPacket packet, boolean encrypt)
+	{
+		String message = packet.toJson();
+		if (encrypt) {
+			try {
+				message = encrypt(message);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		writer.println(message);
+		writer.flush();
+	}
+
 	public void run()
 	{
-		System.out.println("Client thread started");
+		// TODO: Create timer for send new accessToken every 10 minutes
 		try {
 			while (!socket.isClosed()) {
 				if (reader.hasNext()) {
 					String clientMessage = reader.nextLine();
-					MCPPacket packet = MCPPacket.parse(clientMessage);
+					MCPPacket packet;
+					try {
+						clientMessage = decrypt(clientMessage);
+					} catch (Exception ignored) {
+
+					} finally {
+						packet = MCPPacket.parse(clientMessage);
+					}
 					System.out.println(packet.getMajorPacketType() + " " + packet.getMinorPacketType() + " " + packet.getData());
 
 					System.out.println(clientMessage);
@@ -86,4 +106,11 @@ public class Client extends Thread
 	{
 		this.secretKey = secretKey;
 	}
+
+	public void setAccessToken(String accessToken)
+	{
+		this.accessToken = accessToken;
+	}
+
+	public String getAccessToken() { return accessToken; }
 }

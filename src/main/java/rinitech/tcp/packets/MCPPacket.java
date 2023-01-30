@@ -66,4 +66,12 @@ public class MCPPacket
 	{
 		return data;
 	}
+
+	public String toJson()
+	{
+		JsonObject jsonObject = new JsonObject();
+		jsonObject.addProperty("type", majorPacketType.toString() + "." + minorPacketType.toString());
+		jsonObject.add("data", new Gson().toJsonTree(data).getAsJsonObject().get("data"));
+		return jsonObject.toString() + "\n";
+	}
 }

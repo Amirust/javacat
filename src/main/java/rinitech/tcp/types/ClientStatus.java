@@ -4,5 +4,6 @@ public enum ClientStatus
 {
 	Awaiting,
 	Handshake,
+	AwaitingLogin,
 	Connected
 }

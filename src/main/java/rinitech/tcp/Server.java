@@ -1,5 +1,8 @@
 package rinitech.tcp;
 
+import rinitech.config.Config;
+import rinitech.database.DatabaseAdapter;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -14,9 +17,13 @@ public class Server
 	public static final ArrayList<Client> clients = new ArrayList<>();
 	public static final ArrayList<Room> rooms = new ArrayList<>();
 	public DiffieHellman DH = new DiffieHellman();
+	public DatabaseAdapter database;
+	public Config config;
 
-	public Server(int port) throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
+	public Server(Config config, DatabaseAdapter database, int port) throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
 	{
+		this.config = config;
+		this.database = database;
 		serverSocket = new ServerSocket(port);
 	}
 

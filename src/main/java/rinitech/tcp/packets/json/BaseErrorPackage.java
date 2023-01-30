@@ -9,4 +9,9 @@ public class BaseErrorPackage extends BasePackage
 	 * The error message.
 	 */
 	public String error;
+
+	public BaseErrorPackage(String error)
+	{
+		this.error = error;
+	}
 }

@@ -1,6 +1,9 @@
 package rinitech.tcp.errors;
 
-public class MCPError extends Error
+import org.apache.commons.lang3.NotImplementedException;
+import rinitech.tcp.packets.MCPPacket;
+
+public abstract class MCPError extends Error
 {
 	public MCPError(String message)
 	{
@@ -12,4 +15,6 @@ public class MCPError extends Error
 	{
 		return super.toString();
 	}
+
+	public abstract MCPPacket toPacket();
 }

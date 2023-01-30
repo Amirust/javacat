@@ -5,6 +5,7 @@ public enum ErrorPacketType implements MinorPacketType
 	UserPasswordRequired,
 	UserPasswordInvalid,
 	UserNotFound,
+	UnsupportedVersion,
 	UserAlreadyExists,
 	PacketDataIncorrect,
 	AuthDataIncorrect,

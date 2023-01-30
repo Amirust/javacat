@@ -5,12 +5,9 @@ import rinitech.tcp.packets.json.BaseErrorPackage;
 import rinitech.tcp.types.ErrorPacketType;
 import rinitech.tcp.types.MajorPacketType;
 
-public class PacketException extends MCPError
+public class PacketDataIncorrect extends MCPError
 {
-	public PacketException(String message)
-	{
-		super(message);
-	}
+	public PacketDataIncorrect() { super("Packet data incorrect"); }
 
 	public MCPPacket toPacket()
 	{

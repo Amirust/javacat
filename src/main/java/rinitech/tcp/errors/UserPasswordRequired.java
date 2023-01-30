@@ -5,15 +5,15 @@ import rinitech.tcp.packets.json.BaseErrorPackage;
 import rinitech.tcp.types.ErrorPacketType;
 import rinitech.tcp.types.MajorPacketType;
 
-public class PacketException extends MCPError
+public class UserPasswordRequired extends MCPError
 {
-	public PacketException(String message)
+	public UserPasswordRequired()
 	{
-		super(message);
+		super("User password required");
 	}
 
 	public MCPPacket toPacket()
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.PacketDataIncorrect, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserPasswordRequired, new BaseErrorPackage(this.getMessage()));
 	}
 }
