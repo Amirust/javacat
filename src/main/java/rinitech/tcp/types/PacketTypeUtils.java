@@ -50,6 +50,6 @@ public class PacketTypeUtils
 
 	public static BasePackage getPacketByType(ErrorPacketType type)
 	{
-		return new rinitech.tcp.packets.json.BaseErrorPackage();
+		return new rinitech.tcp.packets.json.BaseErrorPackage(type.name());
 	}
 }
