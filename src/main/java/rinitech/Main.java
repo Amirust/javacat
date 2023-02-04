@@ -6,16 +6,24 @@ import rinitech.database.DatabaseAdapter;
 import rinitech.database.implementations.NitriteAdapter;
 import rinitech.tcp.Server;
 
+import java.util.Objects;
+
 public class Main
 {
 	public static void main(String[] args)
 	{
 		Config config = new Config();
-		config.http = Parser.parse("http");
-		System.out.println("HTTP: " + config.http);
-		DatabaseAdapter db = new NitriteAdapter("U:\\Projects\\javacat\\nitrite.db", "nitrite", "dontmatterlol");
+		config.http = Parser.parse("miricat.http");
+		config.port = Integer.parseInt(Objects.requireNonNull(Parser.parse("miricat.port")));
+		config.rootUsername = Parser.parse("root.username");
+		config.rootPassword = Parser.parse("root.password");
+		config.dbpath = Parser.parse("db.path");
+		config.dbUser = Parser.parse("db.user");
+		config.dbPass = Parser.parse("db.password");
+
+		DatabaseAdapter db = new NitriteAdapter(config.dbpath, config.dbUser, config.dbPass);
 		try {
-			Server server = new Server(config, db,3072);
+			Server server = new Server(config, db,config.port);
 			server.start();
 		} catch (Exception e) {
 			e.printStackTrace();
