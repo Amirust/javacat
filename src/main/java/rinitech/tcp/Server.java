@@ -2,7 +2,6 @@ package rinitech.tcp;
 
 import rinitech.config.Config;
 import rinitech.database.DatabaseAdapter;
-import rinitech.tcp.packets.json.BasePackage;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,10 +11,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-public class Server extends EventEmitter<BasePackage>
+public class Server
 {
 	private final ServerSocket serverSocket;
-	public final ArrayList<Client> clients = new ArrayList<>();
+	public final ArrayList<ServerClient> serverClients = new ArrayList<>();
 	public static final ArrayList<Room> rooms = new ArrayList<>();
 	public DiffieHellman DH = new DiffieHellman();
 	public DatabaseAdapter database;
@@ -36,9 +35,9 @@ public class Server extends EventEmitter<BasePackage>
 			Socket socket = serverSocket.accept();
 			System.out.println("Client connected from " + socket.getInetAddress().getHostAddress());
 			try {
-				Client client = Client.fromSocket(socket, this);
-				addClient(client);
-				client.start();
+				ServerClient serverClient = ServerClient.fromSocket(socket, this);
+				addClient(serverClient);
+				serverClient.start();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -50,8 +49,8 @@ public class Server extends EventEmitter<BasePackage>
 		serverSocket.close();
 	}
 
-	public void addClient(Client client)
+	public void addClient(ServerClient serverClient)
 	{
-		clients.add(client);
+		serverClients.add(serverClient);
 	}
 }

@@ -1,6 +1,6 @@
 package rinitech.tcp.packets;
 
-import rinitech.tcp.Client;
+import rinitech.tcp.ServerClient;
 import rinitech.tcp.Room;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class SerializableRoom
 	{
 		this.id = room.id;
 		this.name = room.name;
-		for (Client user : room.users)
+		for (ServerClient user : room.users)
 		{
 			allUsers.add(user.username);
 		}

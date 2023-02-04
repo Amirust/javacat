@@ -1,6 +1,5 @@
 package rinitech.tcp.packets.json;
 
-public class BasePackage
+public abstract class BasePackage
 {
-	public String type;
 }

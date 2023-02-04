@@ -1,32 +1,34 @@
 package rinitech.tcp;
+import rinitech.tcp.types.ClientEvent;
+
 import java.util.*;
 public class EventEmitter<T>
 {
 	private final HashMap<String, LinkedList<Pair<String, Callback<T>>>> callbacks = new HashMap<>();
-	public void emit(String channel, T object) {
-		if (channel.equals("*")) {
+	public void emit(ClientEvent channel, T object) {
+		if (channel.equals(ClientEvent.All)) {
 			for (Map.Entry<String, LinkedList<Pair<String, Callback<T>>>> entry : callbacks.entrySet())
 				for (Pair<String, Callback<T>> callbackPair : entry.getValue())
-					callbackPair.getSecond().call(channel, object);
+					callbackPair.getSecond().call(object);
 		} else {
-			LinkedList<Pair<String, Callback<T>>> callbackPairList = callbacks.get("*");
+			LinkedList<Pair<String, Callback<T>>> callbackPairList = callbacks.get(ClientEvent.All.name());
 			if (callbackPairList != null)
 				for (Pair<String, Callback<T>> callbackPair : callbackPairList)
-					callbackPair.getSecond().call(channel, object);
-			callbackPairList = callbacks.get(channel);
+					callbackPair.getSecond().call(object);
+			callbackPairList = callbacks.get(channel.name());
 			if (callbackPairList == null) return;
 			for (Pair<String, Callback<T>> callbackPair : callbackPairList)
-				callbackPair.getSecond().call(channel, object);
+				callbackPair.getSecond().call(object);
 		}
 	}
 
-	public String on(String channel, Callback<T> callback) {
+	public String on(ClientEvent channel, Callback<T> callback) {
 		String uuid = UUID.randomUUID().toString();
-		LinkedList<Pair<String, Callback<T>>> callbackPairList = callbacks.get(channel);
+		LinkedList<Pair<String, Callback<T>>> callbackPairList = callbacks.get(channel.name());
 		if (callbackPairList == null) {
 			callbackPairList = new LinkedList<>();
 			callbackPairList.add(new Pair<>(uuid, callback));
-			callbacks.put(channel, callbackPairList);
+			callbacks.put(channel.name(), callbackPairList);
 		} else {
 			callbackPairList.add(new Pair<>(uuid, callback));
 		}
@@ -60,5 +62,5 @@ class Pair<T1, T2> {
 
 @FunctionalInterface
 interface Callback<T> {
-	void call(String channel, T object);
+	void call(T object);
 }

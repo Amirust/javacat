@@ -10,7 +10,7 @@ public class Room
 {
 	public int id;
 	public String name;
-	public ArrayList<Client> users = new ArrayList<>();
+	public ArrayList<ServerClient> users = new ArrayList<>();
 
 	public Room(int id, String name)
 	{
@@ -28,19 +28,19 @@ public class Room
 
 	public void broadcast(MCPPacket packet)
 	{
-		for (Client user : users)
+		for (ServerClient user : users)
 		{
 			user.send(packet, true);
 		}
 	}
 
-	public void addUser(Client client)
+	public void addUser(ServerClient serverClient)
 	{
-		users.add(client);
+		users.add(serverClient);
 	}
 
-	public void removeUser(Client client)
+	public void removeUser(ServerClient serverClient)
 	{
-		users.remove(client);
+		users.remove(serverClient);
 	}
 }
