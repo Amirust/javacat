@@ -13,7 +13,7 @@ public class Main
 		Config config = new Config();
 		config.http = Parser.parse("http");
 		System.out.println("HTTP: " + config.http);
-		DatabaseAdapter db = new NitriteAdapter("U:\\Projects\\javacat\\nitrite.db", "nitrite", "dontmatterlol");
+		DatabaseAdapter db = new NitriteAdapter("nitrite.db", "nitrite", "dontmatterlol");
 		try {
 			Server server = new Server(config, db,3072);
 			server.start();
