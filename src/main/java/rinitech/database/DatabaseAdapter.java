@@ -39,4 +39,7 @@ public interface DatabaseAdapter
 
 	// All messages
 	public Object[] getMessages(int roomId);
+
+	// Close DB
+	public void close();
 }

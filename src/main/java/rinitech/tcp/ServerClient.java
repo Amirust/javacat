@@ -138,4 +138,12 @@ public class ServerClient extends Thread
 			}
 		}).start();
 	}
+
+	public void stopClient() {
+		try {
+			writer.close();
+			reader.close();
+			socket.close();
+		} catch (IOException ignored) {}
+	}
 }

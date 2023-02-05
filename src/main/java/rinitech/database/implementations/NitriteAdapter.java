@@ -291,4 +291,16 @@ public class NitriteAdapter implements DatabaseAdapter
 	{
 		return new Object[0];
 	}
+
+	public void close()
+	{
+		try {
+			users.close();
+			messages.close();
+			rooms.close();
+			db.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

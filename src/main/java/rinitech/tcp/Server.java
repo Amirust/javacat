@@ -19,6 +19,7 @@ public class Server
 	public DiffieHellman DH = new DiffieHellman();
 	public DatabaseAdapter database;
 	public Config config;
+	private boolean isClosed = false;
 
 	public Server(Config config, DatabaseAdapter database, int port) throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
 	{
@@ -30,26 +31,33 @@ public class Server
 		serverSocket = new ServerSocket(port);
 	}
 
-	public void start() throws IOException
+	public void start()
 	{
 		System.out.println("Server started on port " + serverSocket.getLocalPort());
-		while (!serverSocket.isClosed())
+		while (!isClosed)
 		{
-			Socket socket = serverSocket.accept();
-			System.out.println("Client connected from " + socket.getInetAddress().getHostAddress());
 			try {
-				ServerClient serverClient = ServerClient.fromSocket(socket, this);
-				addClient(serverClient);
-				serverClient.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+				Socket socket = serverSocket.accept();
+				System.out.println("Client connected from " + socket.getInetAddress().getHostAddress());
+				try {
+					ServerClient serverClient = ServerClient.fromSocket(socket, this);
+					addClient(serverClient);
+					serverClient.start();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} catch (IOException ignored) {}
 		}
 	}
 
-	public void stop() throws IOException
+	public void stop() throws IOException, InterruptedException
 	{
+		isClosed = true;
 		serverSocket.close();
+		for (ServerClient serverClient : serverClients)
+		{
+			serverClient.stopClient();
+		}
 	}
 
 	public void addClient(ServerClient serverClient)
