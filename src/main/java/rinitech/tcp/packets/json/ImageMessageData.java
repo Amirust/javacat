@@ -2,8 +2,6 @@ package rinitech.tcp.packets.json;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.Date;
-
 public class ImageMessageData
 {
 	/**
@@ -19,10 +17,5 @@ public class ImageMessageData
 	 * The raw timestamp of the image.
 	 */
 	@SerializedName("time")
-	private long rawTime;
-
-	/**
-	 * The timestamp of the image.
-	 */
-	public Date time = new Date(rawTime);
+	public long rawTime;
 }

@@ -4,13 +4,13 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Scanner;
 
+import rinitech.tcp.errors.PacketDataIncorrect;
 import rinitech.tcp.gateway.ServerIncomingGateway;
 import rinitech.tcp.packets.MCPPacket;
 import rinitech.tcp.packets.json.UpdateAccessToken;
@@ -56,7 +56,7 @@ public class ServerClient extends Thread
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 		cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
 		byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(message));
-		return new String(decrypted, StandardCharsets.UTF_8);
+		return new String(decrypted);
 	}
 
 	public static ServerClient fromSocket(Socket socket, Server server) throws IOException
@@ -100,6 +100,7 @@ public class ServerClient extends Thread
 				Thread.sleep(100);
 			}
 		} catch (Exception e) {
+			send(new PacketDataIncorrect().toPacket(), false);
 			e.printStackTrace();
 		}
 	}
@@ -120,7 +121,7 @@ public class ServerClient extends Thread
 		new Thread(() -> {
 			while (!socket.isClosed()) {
 				try {
-					Thread.sleep(1000 * 60 * 60 * 24);
+					Thread.sleep(60 * 1000 * 10);
 					String newAccessToken = Utils.generateAccessToken(username);
 					UpdateAccessToken updateAccessToken = new UpdateAccessToken();
 					updateAccessToken.data = new UpdateAccessTokenData();

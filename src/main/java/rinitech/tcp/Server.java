@@ -24,6 +24,9 @@ public class Server
 	{
 		this.config = config;
 		this.database = database;
+		for (rinitech.database.types.Room room : database.getRooms()) {
+			rooms.add(new Room(room.id, room.name));
+		}
 		serverSocket = new ServerSocket(port);
 	}
 

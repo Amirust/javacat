@@ -100,12 +100,12 @@ public class ClientIncomingGateway
 		switch ((MessagePacketType) packet.getMinorPacketType()) {
 			case TextMessage -> {
 				TextMessage textMessage = (TextMessage) packet.getData();
-				if (textMessage.data == null || textMessage.data.message == null || textMessage.data.user == null || textMessage.data.time == null) throw new PacketDataIncorrect();
+				if (textMessage.data == null || textMessage.data.message == null || textMessage.data.user == null || textMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
 				client.events.emit(ClientEvent.TextMessage, packet);
 			}
 			case ImageMessage -> {
 				ImageMessage imageMessage = (ImageMessage) packet.getData();
-				if (imageMessage.data == null || imageMessage.data.image == null || imageMessage.data.user == null || imageMessage.data.time == null) throw new PacketDataIncorrect();
+				if (imageMessage.data == null || imageMessage.data.image == null || imageMessage.data.user == null || imageMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
 				client.events.emit(ClientEvent.ImageMessage, packet);
 			}
 		}
