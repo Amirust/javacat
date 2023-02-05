@@ -50,7 +50,7 @@ public class ServerIncomingGateway
 				byte[] publicKey = Utils.hexStringToByteArray(hexPublicKey);
 				byte[] sharedKey = server.DH.generateSharedSecret(publicKey);
 				String base64SharedKey = Base64.getEncoder().encodeToString(sharedKey);
-				if (base64SharedKey.length() > 32) base64SharedKey = base64SharedKey.substring(0, 32);
+				if (base64SharedKey.length() > 43) base64SharedKey = base64SharedKey.substring(0, 43);
 				SecretKey secretKey = Utils.generateSecretKey(base64SharedKey);
 				Handshake handshakeResponse = new Handshake();
 				handshakeResponse.data = new HandshakeData();

@@ -4,9 +4,11 @@ import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Scanner;
 
@@ -29,6 +31,7 @@ public class ServerClient extends Thread
 	public ClientStatus status = ClientStatus.Awaiting;
 	private final Server server;
 	public boolean isRoot = false;
+	private IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 
 	public ServerClient(Socket socket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken, Server server)
 	{
@@ -43,7 +46,6 @@ public class ServerClient extends Thread
 
 	public String encrypt(String message) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
 	{
-		IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
 		byte[] encrypted = cipher.doFinal(message.getBytes());
@@ -52,11 +54,10 @@ public class ServerClient extends Thread
 
 	public String decrypt(String message) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
 	{
-		IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 		Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 		cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
 		byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(message));
-		return new String(decrypted);
+		return new String(decrypted, StandardCharsets.UTF_8);
 	}
 
 	public static ServerClient fromSocket(Socket socket, Server server) throws IOException
@@ -89,14 +90,18 @@ public class ServerClient extends Thread
 					String clientMessage = reader.nextLine();
 					MCPPacket packet;
 					try {
+						System.out.println("ENCRYPTED MESSAGE: " + clientMessage);
 						clientMessage = decrypt(clientMessage);
-					} catch (Exception ignored) {
-
+					} catch (Exception e) {
+						e.printStackTrace();
 					} finally {
+						System.out.println("DECRYPTED MESSAGE: " + clientMessage);
 						packet = MCPPacket.parse(clientMessage);
+						System.out.println("JSON MESSAGE: " + packet.toJson());
 					}
 					ServerIncomingGateway.handle(packet, this, server);
 				}
+				Thread.sleep(100);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

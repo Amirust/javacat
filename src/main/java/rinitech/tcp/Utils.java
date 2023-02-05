@@ -30,7 +30,7 @@ public class Utils
 	public static SecretKey generateSecretKey(String key)
 	{
 		byte[] decodedKey = java.util.Base64.getDecoder().decode(key);
-		return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+		return new SecretKeySpec(decodedKey,"AES");
 	}
 
 	public static String generateAccessToken(String username)
