@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Scanner;
 
@@ -31,7 +30,7 @@ public class ServerClient extends Thread
 	public ClientStatus status = ClientStatus.Awaiting;
 	private final Server server;
 	public boolean isRoot = false;
-	private IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+	private final IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 
 	public ServerClient(Socket socket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken, Server server)
 	{
@@ -90,14 +89,11 @@ public class ServerClient extends Thread
 					String clientMessage = reader.nextLine();
 					MCPPacket packet;
 					try {
-						System.out.println("ENCRYPTED MESSAGE: " + clientMessage);
 						clientMessage = decrypt(clientMessage);
-					} catch (Exception e) {
-						e.printStackTrace();
+					} catch (Exception ignored) {
+
 					} finally {
-						System.out.println("DECRYPTED MESSAGE: " + clientMessage);
 						packet = MCPPacket.parse(clientMessage);
-						System.out.println("JSON MESSAGE: " + packet.toJson());
 					}
 					ServerIncomingGateway.handle(packet, this, server);
 				}
