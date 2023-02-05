@@ -8,9 +8,17 @@ import rinitech.tcp.Server;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 
 public class Main
 {
+	final ExecutorService executor;
+
+	public Main(ExecutorService executor)
+	{
+		this.executor = executor;
+	}
+
 	public static void main(String[] args)
 	{
 		Config config = new Config();
@@ -33,7 +41,6 @@ public class Main
 					db.close();
 				} catch (IOException | InterruptedException ignored) {}
 				System.out.println("Server stopped.\n");
-				System.exit(0);
 			}));
 			server.start();
 		} catch (Exception e) {
