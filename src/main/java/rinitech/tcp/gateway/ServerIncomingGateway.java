@@ -37,8 +37,8 @@ public class ServerIncomingGateway
 	private static void handleHandshake(MCPPacket packet, ServerClient serverClient, Server server)
 	{
 		if (packet.getMinorPacketType().equals(HandshakePacketType.Handshake)) {
-			if (serverClient.status == ClientStatus.Awaiting) {
-				serverClient.status = ClientStatus.Handshake;
+			if (serverClient.getStatus() == ClientStatus.Awaiting) {
+				serverClient.setStatus(ClientStatus.Handshake);
 				Handshake handshake = (Handshake) packet.getData();
 				if (handshake.data == null || handshake.data.version == null || handshake.data.publicKey == null) {
 					serverClient.send(new PacketDataIncorrect().toPacket(), false);
@@ -50,14 +50,14 @@ public class ServerIncomingGateway
 				}
 				String hexPublicKey = handshake.data.publicKey;
 				byte[] publicKey = Utils.hexStringToByteArray(hexPublicKey);
-				byte[] sharedKey = server.DH.generateSharedSecret(publicKey);
+				byte[] sharedKey = server.getDH().generateSharedSecret(publicKey);
 				String base64SharedKey = Base64.getEncoder().encodeToString(sharedKey);
 				if (base64SharedKey.length() > 43) base64SharedKey = base64SharedKey.substring(0, 43);
 				SecretKey secretKey = Utils.generateSecretKey(base64SharedKey);
 				Handshake handshakeResponse = new Handshake();
 				handshakeResponse.data = new HandshakeData();
 				handshakeResponse.data.version = "2.0.0";
-				handshakeResponse.data.publicKey = Utils.byteArrayToHexString(server.DH.generatePublicKey());
+				handshakeResponse.data.publicKey = Utils.byteArrayToHexString(server.getDH().generatePublicKey());
 
 				serverClient.setSecretKey(secretKey);
 				serverClient.send(
@@ -75,15 +75,15 @@ public class ServerIncomingGateway
 	{
 		switch ((AuthenticationPacketType) packet.getMinorPacketType()) {
 			case Login -> {
-				if (serverClient.status == ClientStatus.Handshake) {
-					serverClient.status = ClientStatus.AwaitingLogin;
+				if (serverClient.getStatus() == ClientStatus.Handshake) {
+					serverClient.setStatus(ClientStatus.AwaitingLogin);
 					rinitech.tcp.packets.json.Login login = (Login) packet.getData();
-					User user = server.database.getUser(login.data.username);
-					if (login.data.username.equals(server.config.rootUsername)) {
+					User user = server.getDatabase().getUser(login.data.username);
+					if (login.data.username.equals(server.getConfig().rootUsername)) {
 						user = new User();
-						user.username = server.config.rootUsername;
-						user.password = server.config.rootPassword;
-						serverClient.isRoot = true;
+						user.username = server.getConfig().rootUsername;
+						user.password = server.getConfig().rootPassword;
+						serverClient.setRoot(true);
 					}
 					if (user == null) {
 						serverClient.send(new rinitech.tcp.errors.UserNotFound().toPacket(), true);
@@ -94,19 +94,19 @@ public class ServerIncomingGateway
 						break;
 					}
 					if (user.password.equals(login.data.password)) {
-						serverClient.username = login.data.username;
-						serverClient.setAccessToken(Utils.generateAccessToken(serverClient.username));
-						serverClient.status = ClientStatus.Connected;
+						serverClient.setUsername(login.data.username);
+						serverClient.setAccessToken(Utils.generateAccessToken(serverClient.getUsername()));
+						serverClient.setStatus(ClientStatus.Connected);
 						rinitech.tcp.packets.json.Accepted accepted = new rinitech.tcp.packets.json.Accepted();
 						accepted.data = new AcceptedData();
 						ArrayList<SerializableRoom> rooms = new ArrayList<>();
-						for (rinitech.tcp.Room room : server.rooms) {
+						for (rinitech.tcp.Room room : Server.getRooms()) {
 							SerializableRoom serializableRoom = new SerializableRoom(room);
 							rooms.add(serializableRoom);
 						}
 
 						accepted.data.rooms = rooms.toArray(new SerializableRoom[0]);
-						accepted.data.http = server.config.http;
+						accepted.data.http = server.getConfig().http;
 						serverClient.send(
 								new MCPPacket(
 										MajorPacketType.Authentication,
@@ -139,7 +139,7 @@ public class ServerIncomingGateway
 	{
 		switch ((MessagePacketType) packet.getMinorPacketType()) {
 			case CreateTextMessage -> {
-				if (serverClient.status == ClientStatus.Connected) {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.CreateTextMessage createTextMessage = (CreateTextMessage) packet.getData();
 					Room room = Room.fromId(createTextMessage.rawRoom);
 					if (createTextMessage.data.message == null || createTextMessage.data.message.isEmpty()) {
@@ -155,16 +155,16 @@ public class ServerIncomingGateway
 
 					textMessage.data.message = createTextMessage.data.message;
 					textMessage.data.rawTime = new Date().getTime();
-					textMessage.data.user = serverClient.username;
-					textMessage.rawRoom = room.id;
+					textMessage.data.user = serverClient.getUsername();
+					textMessage.rawRoom = room.getId();
 
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.TextMessage, textMessage);
-					server.database.addTextMessage(serverClient.username, textMessage.data.message, room.id, new Date(textMessage.data.rawTime));
+					server.getDatabase().addTextMessage(serverClient.getUsername(), textMessage.data.message, room.getId(), new Date(textMessage.data.rawTime));
 					room.broadcast(packetToSend);
 				}
 			}
 			case CreateImageMessage -> {
-				if (serverClient.status == ClientStatus.Connected) {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.CreateImageMessage createImageMessage = (CreateImageMessage) packet.getData();
 					Room room = Room.fromId(createImageMessage.rawRoom);
 					if (createImageMessage.data.image == null || createImageMessage.data.image.isEmpty()) {
@@ -180,11 +180,11 @@ public class ServerIncomingGateway
 
 					imageMessage.data.image = createImageMessage.data.image;
 					imageMessage.data.rawTime = new Date().getTime();
-					imageMessage.data.user = serverClient.username;
-					imageMessage.rawRoom =room.id;
+					imageMessage.data.user = serverClient.getUsername();
+					imageMessage.rawRoom = room.getId();
 
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.ImageMessage, imageMessage);
-					server.database.addImageMessage(serverClient.username, imageMessage.data.image, room.id, new Date(imageMessage.data.rawTime));
+					server.getDatabase().addImageMessage(serverClient.getUsername(), imageMessage.data.image, room.getId(), new Date(imageMessage.data.rawTime));
 					room.broadcast(packetToSend);
 				}
 			}
@@ -195,18 +195,18 @@ public class ServerIncomingGateway
 	{
 		switch ((RoomPacketType) packet.getMinorPacketType()) {
 			case Create -> {
-				if (serverClient.status == ClientStatus.Connected) {
-					if (!serverClient.isRoot) serverClient.send(new AccessDenied().toPacket(), true);
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Create createRoom = (Create) packet.getData();
 					if (createRoom.data.name == null || createRoom.data.name.isEmpty()) {
 						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
 						break;
 					}
 
-					int id = server.rooms.size() + 1;
+					int id = server.getRooms().size() + 1;
 					rinitech.tcp.Room room = new rinitech.tcp.Room(id, createRoom.data.name);
-					server.database.addRoom(room.name, room.id);
-					server.rooms.add(room);
+					server.getDatabase().addRoom(room.getName(), room.getId());
+					server.getRooms().add(room);
 
 					Created created = new Created();
 					created.data = new CreatedData();
@@ -218,25 +218,25 @@ public class ServerIncomingGateway
 				}
 			}
 			case Join -> {
-				if (serverClient.status == ClientStatus.Connected) {
-					if (!serverClient.isRoot) serverClient.send(new AccessDenied().toPacket(), true);
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Join joinRoom = (Join) packet.getData();
 					System.out.println(joinRoom.data.room);
 
-					rinitech.tcp.Room room = server.rooms.stream().filter(r -> r.id == joinRoom.data.room).findFirst().orElse(null);
+					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == joinRoom.data.room).findFirst().orElse(null);
 					System.out.println(room);
 					if (room == null) {
 						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
 						break;
 					}
 
-					room.users.add(serverClient);
+					room.getUsers().add(serverClient);
 
 					Joined joined = new Joined();
 					joined.data = new JoinedData();
-					joined.data.room = room.id;
-					joined.data.user = serverClient.username;
-					joined.data.allUsers = room.users.stream().map(u -> u.username).toList().toArray(new String[0]);
+					joined.data.room = room.getId();
+					joined.data.user = serverClient.getUsername();
+					joined.data.allUsers = room.getUsers().stream().map(ServerClient::getUsername).toList().toArray(new String[0]);
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Joined, joined);
 
 					serverClient.send(packetToSend, true);
@@ -244,22 +244,22 @@ public class ServerIncomingGateway
 				}
 			}
 			case Leave -> {
-				if (serverClient.status == ClientStatus.Connected) {
-					if (!serverClient.isRoot) serverClient.send(new AccessDenied().toPacket(), true);
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Leave leaveRoom = (Leave) packet.getData();
 
-					rinitech.tcp.Room room = server.rooms.stream().filter(r -> r.id == leaveRoom.data.room).findFirst().orElse(null);
+					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == leaveRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
 						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
 						break;
 					}
 
-					room.users.remove(serverClient);
+					room.getUsers().remove(serverClient);
 
 					Left left = new Left();
 					left.data = new LeftData();
-					left.data.room = room.id;
-					left.data.user = serverClient.username;
+					left.data.room = room.getId();
+					left.data.user = serverClient.getUsername();
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Left, left);
 
 					serverClient.send(packetToSend, true);
@@ -267,23 +267,23 @@ public class ServerIncomingGateway
 				}
 			}
 			case Update -> {
-				if (serverClient.status == ClientStatus.Connected) {
-					if (!serverClient.isRoot) serverClient.send(new AccessDenied().toPacket(), true);
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Update updateRoom = (Update) packet.getData();
 
-					rinitech.tcp.Room room = server.rooms.stream().filter(r -> r.id == updateRoom.data.room).findFirst().orElse(null);
+					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == updateRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
 						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
 						break;
 					}
 
-					room.name = updateRoom.data.name;
-					server.database.updateRoom(room.id, room.name);
+					room.setName(updateRoom.data.name);
+					server.getDatabase().updateRoom(room.getId(), room.getName());
 
 					Updated updated = new Updated();
 					updated.data = new UpdatedData();
-					updated.data.room = room.id;
-					updated.data.name = room.name;
+					updated.data.room = room.getId();
+					updated.data.name = room.getName();
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Updated, updated);
 
 					serverClient.send(packetToSend, true);
@@ -291,22 +291,22 @@ public class ServerIncomingGateway
 				}
 			}
 			case Delete -> {
-				if (serverClient.status == ClientStatus.Connected) {
-					if (!serverClient.isRoot) serverClient.send(new AccessDenied().toPacket(), true);
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Delete deleteRoom = (Delete) packet.getData();
 
-					rinitech.tcp.Room room = server.rooms.stream().filter(r -> r.id == deleteRoom.data.room).findFirst().orElse(null);
+					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == deleteRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
 						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
 						break;
 					}
 
-					server.rooms.remove(room);
-					server.database.deleteRoom(room.id);
+					server.getRooms().remove(room);
+					server.getDatabase().deleteRoom(room.getId());
 
 					Deleted deleted = new Deleted();
 					deleted.data = new DeletedData();
-					deleted.data.room = room.id;
+					deleted.data.room = room.getId();
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Deleted, deleted);
 
 					serverClient.send(packetToSend, true);
@@ -314,9 +314,9 @@ public class ServerIncomingGateway
 				}
 			}
 			case RequireList -> {
-				if (serverClient.status == ClientStatus.Connected) {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
 					ArrayList<SerializableRoom> rooms = new ArrayList<>();
-					for (rinitech.tcp.Room room : server.rooms) {
+					for (rinitech.tcp.Room room : server.getRooms()) {
 						SerializableRoom serializableRoom = new SerializableRoom(room);
 						rooms.add(serializableRoom);
 					}

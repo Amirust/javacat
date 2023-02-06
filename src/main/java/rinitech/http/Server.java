@@ -30,7 +30,7 @@ public class Server {
 				Router router = new Router(getContext());
 				router.attach("/register", Registration.class);
 				router.attach("/images/{filename}", Images.class);
-				// TODO: Avatars
+				router.attach("/user/{username}/avatar", Avatars.class);
 				return router;
 			}
 		});

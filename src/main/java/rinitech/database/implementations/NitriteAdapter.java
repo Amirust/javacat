@@ -15,10 +15,10 @@ import static org.dizitart.no2.filters.Filters.eq;
 
 public class NitriteAdapter implements DatabaseAdapter
 {
-	Nitrite db;
-	NitriteCollection users;
-	NitriteCollection rooms;
-	NitriteCollection messages;
+	private final Nitrite db;
+	private final NitriteCollection users;
+	private final NitriteCollection rooms;
+	private final NitriteCollection messages;
 	public NitriteAdapter(String dbPath, String userId, String password)
 	{
 		db = Nitrite.builder()

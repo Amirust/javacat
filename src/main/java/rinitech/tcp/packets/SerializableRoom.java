@@ -13,11 +13,11 @@ public class SerializableRoom
 
 	public SerializableRoom(Room room)
 	{
-		this.id = room.id;
-		this.name = room.name;
-		for (ServerClient user : room.users)
+		this.id = room.getId();
+		this.name = room.getName();
+		for (ServerClient user : room.getUsers())
 		{
-			allUsers.add(user.username);
+			allUsers.add(user.getUsername());
 		}
 	}
 }

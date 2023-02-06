@@ -17,19 +17,17 @@ import java.util.Scanner;
 
 public class Client
 {
-	private final Socket serverSocket;
 	private final Scanner reader;
 	private final PrintWriter writer;
-	public String username;
+	private String username;
 	private SecretKey secretKey;
 	private String accessToken;
-	public EventEmitter<MCPPacket> events = new EventEmitter<>();
-	public DiffieHellman DH = new DiffieHellman();
+	private final EventEmitter<MCPPacket> events = new EventEmitter<>();
+	private final DiffieHellman DH = new DiffieHellman();
 	private final IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 
 	public Client(Socket serverSocket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
 	{
-		this.serverSocket = serverSocket;
 		this.username = username;
 		this.reader = reader;
 		this.writer = writer;
@@ -111,5 +109,25 @@ public class Client
 	public void setAccessToken(String accessToken)
 	{
 		this.accessToken = accessToken;
+	}
+
+	public String getUsername()
+	{
+		return username;
+	}
+
+	public String getAccessToken()
+	{
+		return accessToken;
+	}
+
+	public EventEmitter<MCPPacket> getEvents()
+	{
+		return events;
+	}
+
+	public DiffieHellman getDH()
+	{
+		return DH;
 	}
 }

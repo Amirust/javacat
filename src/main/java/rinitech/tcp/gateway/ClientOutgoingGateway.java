@@ -17,7 +17,7 @@ public class ClientOutgoingGateway
 	{
 		Handshake handshake = new Handshake();
 		handshake.data = new HandshakeData();
-		handshake.data.publicKey = Utils.byteArrayToHexString(client.DH.generatePublicKey());
+		handshake.data.publicKey = Utils.byteArrayToHexString(client.getDH().generatePublicKey());
 		handshake.data.version = "2.0.0";
 		MCPPacket packet = new MCPPacket(MajorPacketType.Handshake, HandshakePacketType.Handshake, handshake);
 		client.send(packet, false);

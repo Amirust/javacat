@@ -4,13 +4,11 @@ import rinitech.tcp.packets.MCPPacket;
 
 import java.util.ArrayList;
 
-import static rinitech.tcp.Server.rooms;
-
 public class Room
 {
-	public int id;
-	public String name;
-	public ArrayList<ServerClient> users = new ArrayList<>();
+	private int id;
+	private String name;
+	private ArrayList<ServerClient> users = new ArrayList<>();
 
 	public Room(int id, String name)
 	{
@@ -19,7 +17,7 @@ public class Room
 	}
 	static public Room fromId(int id)
 	{
-		for (Room room : rooms)
+		for (Room room : Server.getRooms())
 		{
 			if (room.id == id) return room;
 		}
@@ -42,5 +40,25 @@ public class Room
 	public void removeUser(ServerClient serverClient)
 	{
 		users.remove(serverClient);
+	}
+
+	public int getId()
+	{
+		return id;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+
+	public ArrayList<ServerClient> getUsers()
+	{
+		return users;
 	}
 }

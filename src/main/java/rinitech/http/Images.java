@@ -16,7 +16,6 @@ import rinitech.tcp.ServerClient;
 import rinitech.tcp.Utils;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
 import java.security.*;
 
@@ -27,9 +26,9 @@ public class Images extends ServerResource
 	@Get
 	public FileRepresentation getImage() throws Exception {
 		String token = getRequest().getHeaders().getFirstValue("Authorization");
-		ServerClient serverClient = Server.serverClients.stream().findFirst().filter(client -> client.getAccessToken().equals(token)).orElse(null);
+		ServerClient serverClient = Server.getClients().stream().findFirst().filter(client -> client.getAccessToken().equals(token)).orElse(null);
 		if (serverClient == null) {
-			getResponse().setStatus(Status.CLIENT_ERROR_UNAUTHORIZED);
+			getResponse().setStatus(Status.CLIENT_ERROR_FORBIDDEN);
 			return null;
 		}
 		String filename = getAttribute("filename");
@@ -50,9 +49,9 @@ public class Images extends ServerResource
 	@Post
 	public Representation uploadImage(Representation entity) throws Exception {
 		String token = getRequest().getHeaders().getFirstValue("Authorization");
-		ServerClient serverClient = Server.serverClients.stream().findFirst().filter(client -> client.getAccessToken().equals(token)).orElse(null);
+		ServerClient serverClient = Server.getClients().stream().findFirst().filter(client -> client.getAccessToken().equals(token)).orElse(null);
 		if (serverClient == null) {
-			getResponse().setStatus(Status.CLIENT_ERROR_UNAUTHORIZED);
+			getResponse().setStatus(Status.CLIENT_ERROR_FORBIDDEN);
 			return null;
 		}
 		Representation result = null;
@@ -67,7 +66,7 @@ public class Images extends ServerResource
 					for (FileItem fi : items) {
 						if (!fi.getFieldName().equals("image")) continue;
 						String fileName = fi.getName();
-						System.out.println("HTTP: Uploading " + fileName + " by " + serverClient.username);
+						System.out.println("HTTP: Uploading " + fileName + " by " + serverClient.getUsername());
 						if (fileName != null) {
 							fileName += System.currentTimeMillis();
 							String filename = Utils.byteArrayToHexString(MessageDigest.getInstance("MD5").digest(fileName.getBytes()));

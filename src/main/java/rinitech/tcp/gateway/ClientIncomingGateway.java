@@ -32,13 +32,13 @@ public class ClientIncomingGateway
 				if (!handshake.data.version.equals("2.0.0")) throw new UnsupportedVersion();
 
 				byte[] publicKey = Utils.hexStringToByteArray(handshake.data.publicKey);
-				byte[] sharedKey = client.DH.generateSharedSecret(publicKey);
+				byte[] sharedKey = client.getDH().generateSharedSecret(publicKey);
 				String base64SharedKey = Base64.getEncoder().encodeToString(sharedKey);
 				if (base64SharedKey.length() > 32) base64SharedKey = base64SharedKey.substring(0, 32);
 				SecretKey secretKey = Utils.generateSecretKey(base64SharedKey);
 
 				client.setSecretKey(secretKey);
-				client.events.emit(ClientEvent.HandshakeSuccess, null);
+				client.getEvents().emit(ClientEvent.HandshakeSuccess, null);
 			}
 		}
 	}
@@ -49,7 +49,7 @@ public class ClientIncomingGateway
 			case Accepted -> {
 				Accepted accepted = (Accepted) packet.getData();
 				if (accepted.data == null || accepted.data.http == null || accepted.data.rooms == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.AuthenticationSuccess, packet);
+				client.getEvents().emit(ClientEvent.AuthenticationSuccess, packet);
 			}
 			case UpdateAccessToken -> {
 				UpdateAccessToken updateAccessToken = (UpdateAccessToken) packet.getData();
@@ -65,32 +65,32 @@ public class ClientIncomingGateway
 			case Joined -> {
 				Joined joined = (Joined) packet.getData();
 				if (joined.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomJoined, packet);
+				client.getEvents().emit(ClientEvent.RoomJoined, packet);
 			}
 			case Left -> {
 				Left left = (Left) packet.getData();
 				if (left.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomLeft, packet);
+				client.getEvents().emit(ClientEvent.RoomLeft, packet);
 			}
 			case Updated -> {
 				Updated updated = (Updated) packet.getData();
 				if (updated.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomUpdated, packet);
+				client.getEvents().emit(ClientEvent.RoomUpdated, packet);
 			}
 			case Deleted -> {
 				Deleted deleted = (Deleted) packet.getData();
 				if (deleted.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomDeleted, packet);
+				client.getEvents().emit(ClientEvent.RoomDeleted, packet);
 			}
 			case Created -> {
 				Created created = (Created) packet.getData();
 				if (created.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomCreated, packet);
+				client.getEvents().emit(ClientEvent.RoomCreated, packet);
 			}
 			case List -> {
 				List list = (List) packet.getData();
 				if (list.data == null) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.RoomList, packet);
+				client.getEvents().emit(ClientEvent.RoomList, packet);
 			}
 		}
 	}
@@ -101,18 +101,18 @@ public class ClientIncomingGateway
 			case TextMessage -> {
 				TextMessage textMessage = (TextMessage) packet.getData();
 				if (textMessage.data == null || textMessage.data.message == null || textMessage.data.user == null || textMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.TextMessage, packet);
+				client.getEvents().emit(ClientEvent.TextMessage, packet);
 			}
 			case ImageMessage -> {
 				ImageMessage imageMessage = (ImageMessage) packet.getData();
 				if (imageMessage.data == null || imageMessage.data.image == null || imageMessage.data.user == null || imageMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
-				client.events.emit(ClientEvent.ImageMessage, packet);
+				client.getEvents().emit(ClientEvent.ImageMessage, packet);
 			}
 		}
 	}
 
 	private static void handleError(Client client, MCPPacket packet)
 	{
-		client.events.emit(ClientEvent.Error, packet);
+		client.getEvents().emit(ClientEvent.Error, packet);
 	}
 }

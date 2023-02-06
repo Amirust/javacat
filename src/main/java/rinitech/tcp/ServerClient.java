@@ -24,12 +24,12 @@ public class ServerClient extends Thread
 	private final Socket socket;
 	private final Scanner reader;
 	private final PrintWriter writer;
-	public String username;
+	private String username;
 	private SecretKey secretKey;
 	private String accessToken;
-	public ClientStatus status = ClientStatus.Awaiting;
+	private ClientStatus status = ClientStatus.Awaiting;
 	private final Server server;
-	public boolean isRoot = false;
+	private boolean isRoot = false;
 	private final IvParameterSpec iv = new IvParameterSpec(new byte[16]);
 
 	public ServerClient(Socket socket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken, Server server)
@@ -89,11 +89,16 @@ public class ServerClient extends Thread
 					String clientMessage = reader.nextLine();
 					MCPPacket packet;
 					try {
-						clientMessage = decrypt(clientMessage);
-					} catch (Exception ignored) {
+						try {
+							clientMessage = decrypt(clientMessage);
+						} catch (Exception ignored) {
 
-					} finally {
-						packet = MCPPacket.parse(clientMessage);
+						} finally {
+							packet = MCPPacket.parse(clientMessage);
+						}
+					} catch (Exception e) {
+						send(new PacketDataIncorrect().toPacket(), false);
+						continue;
 					}
 					ServerIncomingGateway.handle(packet, this, server);
 				}
@@ -104,18 +109,6 @@ public class ServerClient extends Thread
 			e.printStackTrace();
 		}
 	}
-
-	public void setSecretKey(SecretKey secretKey)
-	{
-		this.secretKey = secretKey;
-	}
-
-	public void setAccessToken(String accessToken)
-	{
-		this.accessToken = accessToken;
-	}
-
-	public String getAccessToken() { return accessToken; }
 
 	public void createUpdateAccessTokenTimer() {
 		new Thread(() -> {
@@ -145,5 +138,52 @@ public class ServerClient extends Thread
 			reader.close();
 			socket.close();
 		} catch (IOException ignored) {}
+	}
+
+	public void setSecretKey(SecretKey secretKey)
+	{
+		this.secretKey = secretKey;
+	}
+
+	public SecretKey getSecretKey()
+	{
+		return secretKey;
+	}
+
+	public void setAccessToken(String accessToken)
+	{
+		this.accessToken = accessToken;
+	}
+
+	public String getAccessToken()
+	{
+		return accessToken;
+	}
+
+	public void setUsername(String username)
+	{
+		this.username = username;
+	}
+
+	public String getUsername()
+	{
+		return username;
+	}
+
+	public boolean isRoot()
+	{
+		return isRoot;
+	}
+
+	public void setRoot(boolean root)
+	{
+		isRoot = root;
+	}
+
+	public ClientStatus getStatus() { return status; }
+
+	public void setStatus(ClientStatus status)
+	{
+		this.status = status;
 	}
 }
