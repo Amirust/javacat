@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class Server
 {
 	private final ServerSocket serverSocket;
-	public final ArrayList<ServerClient> serverClients = new ArrayList<>();
+	public static final ArrayList<ServerClient> serverClients = new ArrayList<>();
 	public static final ArrayList<Room> rooms = new ArrayList<>();
 	public DiffieHellman DH = new DiffieHellman();
 	public DatabaseAdapter database;
@@ -50,7 +50,7 @@ public class Server
 		}
 	}
 
-	public void stop() throws IOException, InterruptedException
+	public void stop() throws IOException
 	{
 		isClosed = true;
 		serverSocket.close();

@@ -6,7 +6,6 @@ import rinitech.database.DatabaseAdapter;
 import rinitech.database.implementations.NitriteAdapter;
 import rinitech.tcp.Server;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
@@ -33,15 +32,20 @@ public class Main
 		DatabaseAdapter db = new NitriteAdapter(config.dbpath, config.dbUser, config.dbPass);
 		try {
 			Server server = new Server(config, db,config.port);
+			rinitech.http.Server httpServer = new rinitech.http.Server(config, db);
 			Runtime.getRuntime().addShutdownHook(new Thread(() ->
 			{
 				System.out.println("Shutting down server...");
 				try {
 					server.stop();
+					httpServer.stop();
 					db.close();
-				} catch (IOException | InterruptedException ignored) {}
+				} catch (Exception ignored) {}
 				System.out.println("Server stopped.\n");
 			}));
+			new Thread(() -> {
+				try { httpServer.start(); } catch (Exception e) { e.printStackTrace(); }
+			}).start();
 			server.start();
 		} catch (Exception e) {
 			e.printStackTrace();
