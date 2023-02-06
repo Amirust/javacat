@@ -27,6 +27,16 @@ public class PacketTypeUtils
 		};
 	}
 
+	public static BasePackage getPacketByType(UserPacketType type)
+	{
+		return switch (type) {
+			case Create -> new rinitech.tcp.packets.json.UserCreate();
+			case Created -> new rinitech.tcp.packets.json.UserCreated();
+			case Delete -> new rinitech.tcp.packets.json.UserDelete();
+			case Deleted -> new rinitech.tcp.packets.json.UserDeleted();
+		};
+	}
+
 	public static BasePackage getPacketByType(RoomPacketType type)
 	{
 		return switch (type) {

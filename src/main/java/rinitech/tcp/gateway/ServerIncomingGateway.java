@@ -25,12 +25,12 @@ public class ServerIncomingGateway
 {
 	public static void handle(MCPPacket packet, ServerClient serverClient, Server server)
 	{
-		System.out.println("Received packet: " + packet.getMajorPacketType() + " " + packet.getMinorPacketType());
 		switch (packet.getMajorPacketType()) {
 			case Handshake -> handleHandshake(packet, serverClient, server);
 			case Heartbeat -> handleHeartbeat(packet, serverClient, server);
 			case Authentication -> handleAuthentication(packet, serverClient, server);
 			case Message -> handleMessage(packet, serverClient, server);
+			case User -> handleUser(packet, serverClient, server);
 			case Room -> handleRoom(packet, serverClient, server);
 		}
 	}
@@ -172,7 +172,6 @@ public class ServerIncomingGateway
 					textMessage.rawRoom = room.getId();
 
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.TextMessage, textMessage);
-					server.getDatabase().addTextMessage(serverClient.getUsername(), textMessage.data.message, room.getId(), new Date(textMessage.data.rawTime));
 					room.broadcast(packetToSend);
 				}
 			}
@@ -197,8 +196,57 @@ public class ServerIncomingGateway
 					imageMessage.rawRoom = room.getId();
 
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.ImageMessage, imageMessage);
-					server.getDatabase().addImageMessage(serverClient.getUsername(), imageMessage.data.image, room.getId(), new Date(imageMessage.data.rawTime));
 					room.broadcast(packetToSend);
+				}
+			}
+		}
+	}
+
+	private static void handleUser(MCPPacket packet, ServerClient client, Server server)
+	{
+		switch ((UserPacketType) packet.getMinorPacketType()) {
+			case Create -> {
+				if (client.getStatus() == ClientStatus.Connected) {
+					if (!client.isRoot()) client.send(new AccessDenied().toPacket(), true);
+					rinitech.tcp.packets.json.UserCreate createUser = (UserCreate) packet.getData();
+					if (createUser.data.username == null || createUser.data.username.isEmpty() || createUser.data.password == null || createUser.data.password.isEmpty()) {
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					if (server.getDatabase().getUser(createUser.data.username) != null) {
+						client.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(), true);
+						break;
+					}
+
+					server.getDatabase().addUser(createUser.data.username, createUser.data.password);
+					UserCreated userCreated = new UserCreated();
+					userCreated.data = new UserCreatedData();
+					userCreated.data.username = createUser.data.username;
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Created, userCreated);
+					client.send(packetToSend, true);
+				}
+			}
+			case Delete -> {
+				if (client.getStatus() == ClientStatus.Connected) {
+					if (!client.isRoot()) client.send(new AccessDenied().toPacket(), true);
+					rinitech.tcp.packets.json.UserDelete deleteUser = (UserDelete) packet.getData();
+					if (deleteUser.data.username == null || deleteUser.data.username.isEmpty()) {
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					if (server.getDatabase().getUser(deleteUser.data.username) == null) {
+						client.send(new rinitech.tcp.errors.UserNotFound().toPacket(), true);
+						break;
+					}
+
+					server.getDatabase().deleteUser(deleteUser.data.username);
+					UserDeleted userDeleted = new UserDeleted();
+					userDeleted.data = new UserDeletedData();
+					userDeleted.data.username = deleteUser.data.username;
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Deleted, userDeleted);
+					client.send(packetToSend, true);
 				}
 			}
 		}
@@ -234,10 +282,8 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
 					rinitech.tcp.packets.json.Join joinRoom = (Join) packet.getData();
-					System.out.println(joinRoom.data.room);
 
 					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == joinRoom.data.room).findFirst().orElse(null);
-					System.out.println(room);
 					if (room == null) {
 						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
 						break;

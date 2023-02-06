@@ -9,6 +9,7 @@ public class TypeParser
 			case "Heartbeat" -> MajorPacketType.Heartbeat;
 			case "Authentication" -> MajorPacketType.Authentication;
 			case "Message" -> MajorPacketType.Message;
+			case "User" -> MajorPacketType.User;
 			case "Room" -> MajorPacketType.Room;
 			case "Error" -> MajorPacketType.Error;
 			default -> null;
@@ -22,6 +23,7 @@ public class TypeParser
 			case "Heartbeat" -> getHeartbeatPacketType(minorPacketType);
 			case "Authentication" -> getAuthenticationPacketType(minorPacketType);
 			case "Message" -> getMessagePacketType(minorPacketType);
+			case "User" -> getUserPacketType(minorPacketType);
 			case "Room" -> getRoomPacketType(minorPacketType);
 			case "Error" -> getErrorPacketType(minorPacketType);
 			default -> null;
@@ -57,6 +59,15 @@ public class TypeParser
 			case "TextMessage" -> MessagePacketType.TextMessage;
 			case "CreateImageMessage" -> MessagePacketType.CreateImageMessage;
 			case "ImageMessage" -> MessagePacketType.ImageMessage;
+			default -> null;
+		};
+	}
+
+	private static UserPacketType getUserPacketType(String minorPacketType)
+	{
+		return switch (minorPacketType) {
+			case "Create" -> UserPacketType.Create;
+			case "Delete" -> UserPacketType.Delete;
 			default -> null;
 		};
 	}

@@ -106,7 +106,9 @@ public class ServerClient extends Thread
 					}
 					ServerIncomingGateway.handle(packet, this, server);
 				}
-				Thread.sleep(100);
+				try {
+					Thread.sleep(100);
+				} catch (Exception ignored) {}
 			}
 		} catch (Exception e) {
 			send(new PacketDataIncorrect().toPacket(), false);
@@ -153,6 +155,7 @@ public class ServerClient extends Thread
 	public void stopClient() {
 		try {
 			isClosed = true;
+			System.out.println("Client " + username + " disconnected");
 			writer.close();
 			reader.close();
 			socket.close();

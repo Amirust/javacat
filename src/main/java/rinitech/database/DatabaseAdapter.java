@@ -25,21 +25,6 @@ public interface DatabaseAdapter
 	public boolean deleteRoom(String name);
 	public boolean deleteRoom(int id);
 
-	// TextMessage
-	public TextMessage[] getTextMessages(int roomId);
-	public TextMessage getTextMessage(long id);
-	public boolean addTextMessage(String sender, String content, int roomId, Date date);
-	public boolean deleteTextMessage(long id);
-
-	// ImageMessage
-	public ImageMessage[] getImageMessages(int roomId);
-	public ImageMessage getImageMessage(long id);
-	public boolean addImageMessage(String sender, String url, int roomId, Date date);
-	public boolean deleteImageMessage(long id);
-
-	// All messages
-	public Object[] getMessages(int roomId);
-
 	// Close DB
 	public void close();
 }

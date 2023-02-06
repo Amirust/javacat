@@ -18,7 +18,6 @@ public class NitriteAdapter implements DatabaseAdapter
 	private final Nitrite db;
 	private final NitriteCollection users;
 	private final NitriteCollection rooms;
-	private final NitriteCollection messages;
 	public NitriteAdapter(String dbPath, String userId, String password)
 	{
 		db = Nitrite.builder()
@@ -28,7 +27,6 @@ public class NitriteAdapter implements DatabaseAdapter
 
 		users = db.getCollection("users");
 		rooms = db.getCollection("rooms");
-		messages = db.getCollection("messages");
 	}
 	public User getUser(String username)
 	{
@@ -183,120 +181,10 @@ public class NitriteAdapter implements DatabaseAdapter
 		}
 	}
 
-	public TextMessage[] getTextMessages(int roomId)
-	{
-		Document[] documents = messages.find(eq("roomId", roomId)).toList().toArray(new Document[0]);
-		TextMessage[] messages = new TextMessage[documents.length];
-		for (int i = 0; i < documents.length; i++) {
-			if (documents[i].get("content", String.class) == null) continue;
-			messages[i] = new TextMessage();
-			messages[i].sender = documents[i].get("sender", String.class);
-			messages[i].content = documents[i].get("content", String.class);
-			messages[i].room = documents[i].get("roomId", Integer.class);
-			messages[i].date = documents[i].get("date", Date.class);
-			messages[i].id = documents[i].get("id", Long.class);
-		}
-		return messages;
-	}
-
-	public TextMessage getTextMessage(long id)
-	{
-		return null;
-	}
-
-	public boolean addTextMessage(String sender, String content, int roomId, Date date)
-	{
-		long id = messages.size() + 1;
-		Document doc = Document.createDocument("sender", sender)
-				.put("content", content)
-				.put("roomId", roomId)
-				.put("date", date)
-				.put("id", id);
-
-		try {
-			messages.insert(doc);
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	public boolean deleteTextMessage(long id)
-	{
-		Document origin = messages.find(eq("id", id)).firstOrDefault();
-		if (origin == null) return false;
-		try {
-			messages.remove(origin);
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	public ImageMessage[] getImageMessages(int roomId)
-	{
-		Document[] documents = messages.find(eq("roomId", roomId)).toList().toArray(new Document[0]);
-		ImageMessage[] messages = new ImageMessage[documents.length];
-		for (int i = 0; i < documents.length; i++) {
-			if (documents[i].get("url", String.class) == null) continue;
-			messages[i] = new ImageMessage();
-			messages[i].sender = documents[i].get("sender", String.class);
-			messages[i].url = documents[i].get("url", String.class);
-			messages[i].room = documents[i].get("roomId", Integer.class);
-			messages[i].date = documents[i].get("date", Date.class);
-			messages[i].id = documents[i].get("id", Long.class);
-		}
-		return messages;
-	}
-
-	public ImageMessage getImageMessage(long id)
-	{
-		return null;
-	}
-
-	public boolean addImageMessage(String sender, String url, int roomId, Date date)
-	{
-		long id = messages.size() + 1;
-		Document doc = Document.createDocument("sender", sender)
-				.put("url", url)
-				.put("roomId", roomId)
-				.put("date", date)
-				.put("id", id);
-
-		try {
-			messages.insert(doc);
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	public boolean deleteImageMessage(long id)
-	{
-		Document origin = messages.find(eq("id", id)).firstOrDefault();
-		if (origin == null) return false;
-		try {
-			messages.remove(origin);
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	public Object[] getMessages(int roomId)
-	{
-		return new Object[0];
-	}
-
 	public void close()
 	{
 		try {
 			users.close();
-			messages.close();
 			rooms.close();
 			db.close();
 		} catch (Exception e) {
