@@ -16,9 +16,9 @@ public class Server
 	private final ServerSocket serverSocket;
 	private static final ArrayList<ServerClient> serverClients = new ArrayList<>();
 	private static final ArrayList<Room> rooms = new ArrayList<>();
-	private DiffieHellman DH = new DiffieHellman();
-	private DatabaseAdapter database;
-	private Config config;
+	private final DiffieHellman DH = new DiffieHellman();
+	private final DatabaseAdapter database;
+	private final Config config;
 	private boolean isClosed = false;
 
 	public Server(Config config, DatabaseAdapter database, int port) throws IOException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
@@ -53,11 +53,12 @@ public class Server
 	public void stop() throws IOException
 	{
 		isClosed = true;
-		serverSocket.close();
 		for (ServerClient serverClient : serverClients)
 		{
 			serverClient.stopClient();
 		}
+
+		serverSocket.close();
 	}
 
 	public void addClient(ServerClient serverClient)

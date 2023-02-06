@@ -20,6 +20,13 @@ public class PacketTypeUtils
 		};
 	}
 
+	public static BasePackage getPacketByType(HeartbeatPacketType type)
+	{
+		return switch (type) {
+			case Ping -> new rinitech.tcp.packets.json.Ping();
+		};
+	}
+
 	public static BasePackage getPacketByType(RoomPacketType type)
 	{
 		return switch (type) {

@@ -28,9 +28,13 @@ public class Server {
 			public Restlet createInboundRoot()
 			{
 				Router router = new Router(getContext());
-				router.attach("/register", Registration.class);
-				router.attach("/images/{filename}", Images.class);
-				router.attach("/user/{username}/avatar", Avatars.class);
+				if (config.httpRegistration)
+					router.attach("/register", Registration.class);
+				if (config.httpAvatars)
+					router.attach("/user/{username}/avatar", Avatars.class);
+				if (config.httpImages)
+					router.attach("/images/{filename}", Images.class);
+
 				return router;
 			}
 		});

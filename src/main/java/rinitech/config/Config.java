@@ -9,4 +9,8 @@ public class Config
 	public String dbpath;
 	public String dbUser;
 	public String dbPass;
+	public int heartbeatRate;
+	public boolean httpAvatars;
+	public boolean httpImages;
+	public boolean httpRegistration;
 }

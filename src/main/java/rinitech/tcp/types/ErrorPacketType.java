@@ -15,5 +15,6 @@ public enum ErrorPacketType implements MinorPacketType
 	RoomAlreadyExists,
 	RoomDataIncorrect,
 	RoomDontExists,
-	AccessDenied
+	AccessDenied,
+	HeartbeatTimeout,
 }

@@ -8,8 +8,10 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Scanner;
 
+import rinitech.tcp.errors.HeartbeatTimeout;
 import rinitech.tcp.errors.PacketDataIncorrect;
 import rinitech.tcp.gateway.ServerIncomingGateway;
 import rinitech.tcp.packets.MCPPacket;
@@ -31,6 +33,8 @@ public class ServerClient extends Thread
 	private final Server server;
 	private boolean isRoot = false;
 	private final IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+	private Date lastHeartbeat;
+	private boolean isClosed = false;
 
 	public ServerClient(Socket socket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken, Server server)
 	{
@@ -84,7 +88,7 @@ public class ServerClient extends Thread
 	public void run()
 	{
 		try {
-			while (!socket.isClosed()) {
+			while (!isClosed) {
 				if (reader.hasNext()) {
 					String clientMessage = reader.nextLine();
 					MCPPacket packet;
@@ -112,7 +116,7 @@ public class ServerClient extends Thread
 
 	public void createUpdateAccessTokenTimer() {
 		new Thread(() -> {
-			while (!socket.isClosed()) {
+			while (!isClosed) {
 				try {
 					Thread.sleep(60 * 1000 * 10);
 					String newAccessToken = Utils.generateAccessToken(username);
@@ -125,18 +129,34 @@ public class ServerClient extends Thread
 							updateAccessToken
 					);
 					send(packet, true);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				} catch (InterruptedException ignored) {}
+			}
+		}).start();
+	}
+
+	public void createHeartbeatTimer() {
+		new Thread(() -> {
+			while (!isClosed) {
+				int heartbeatInterval = server.getConfig().heartbeatRate;
+				if (lastHeartbeat != null && (new Date().getTime() - lastHeartbeat.getTime()) > (heartbeatInterval * 3)) {
+					send(new HeartbeatTimeout().toPacket(), false);
+					server.removeClient(this);
+					stopClient();
 				}
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException ignored) {}
 			}
 		}).start();
 	}
 
 	public void stopClient() {
 		try {
+			isClosed = true;
 			writer.close();
 			reader.close();
 			socket.close();
+			this.interrupt();
 		} catch (IOException ignored) {}
 	}
 
@@ -186,4 +206,8 @@ public class ServerClient extends Thread
 	{
 		this.status = status;
 	}
+
+	public Date getLastHeartbeat() { return lastHeartbeat; }
+
+	public void setLastHeartbeat(Date lastHeartbeat) { this.lastHeartbeat = lastHeartbeat; }
 }

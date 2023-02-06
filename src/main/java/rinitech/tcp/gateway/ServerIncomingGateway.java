@@ -28,6 +28,7 @@ public class ServerIncomingGateway
 		System.out.println("Received packet: " + packet.getMajorPacketType() + " " + packet.getMinorPacketType());
 		switch (packet.getMajorPacketType()) {
 			case Handshake -> handleHandshake(packet, serverClient, server);
+			case Heartbeat -> handleHeartbeat(packet, serverClient, server);
 			case Authentication -> handleAuthentication(packet, serverClient, server);
 			case Message -> handleMessage(packet, serverClient, server);
 			case Room -> handleRoom(packet, serverClient, server);
@@ -71,6 +72,15 @@ public class ServerIncomingGateway
 		}
 	}
 
+	private static void handleHeartbeat(MCPPacket packet, ServerClient serverClient, Server server)
+	{
+		if (packet.getMinorPacketType().equals(HeartbeatPacketType.Ping)) {
+			if (serverClient.getStatus() == ClientStatus.Connected) {
+				serverClient.setLastHeartbeat(new Date());
+			}
+		}
+	}
+
 	private static void handleAuthentication(MCPPacket packet, ServerClient serverClient, Server server)
 	{
 		switch ((AuthenticationPacketType) packet.getMinorPacketType()) {
@@ -107,6 +117,7 @@ public class ServerIncomingGateway
 
 						accepted.data.rooms = rooms.toArray(new SerializableRoom[0]);
 						accepted.data.http = server.getConfig().http;
+						accepted.data.heartbeatRate = server.getConfig().heartbeatRate;
 						serverClient.send(
 								new MCPPacket(
 										MajorPacketType.Authentication,
@@ -126,6 +137,8 @@ public class ServerIncomingGateway
 								), true
 						);
 						serverClient.createUpdateAccessTokenTimer();
+						serverClient.setLastHeartbeat(new Date());
+						serverClient.createHeartbeatTimer();
 					}
 					else {
 						serverClient.send(new rinitech.tcp.errors.UserPasswordInvalid().toPacket(), true);
@@ -239,7 +252,6 @@ public class ServerIncomingGateway
 					joined.data.allUsers = room.getUsers().stream().map(ServerClient::getUsername).toList().toArray(new String[0]);
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Joined, joined);
 
-					serverClient.send(packetToSend, true);
 					room.broadcast(packetToSend);
 				}
 			}

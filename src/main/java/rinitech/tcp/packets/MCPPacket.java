@@ -30,6 +30,8 @@ public class MCPPacket
 		MajorPacketType majorPacketType = TypeParser.getMajorPacketType(types[0]);
 		MinorPacketType minorPacketType = TypeParser.getMinorPacketType(types[0], types[1]);
 
+		System.out.println("Major: " + majorPacketType);
+		System.out.println("Minor: " + minorPacketType);
 		if (majorPacketType == null || minorPacketType == null)
 			throw new PacketException("Invalid packet type");
 
@@ -37,6 +39,8 @@ public class MCPPacket
 
 		if (minorPacketType instanceof HandshakePacketType)
 			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((HandshakePacketType) minorPacketType).getClass());
+		else if (minorPacketType instanceof HeartbeatPacketType)
+			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((HeartbeatPacketType) minorPacketType).getClass());
 		else if (minorPacketType instanceof AuthenticationPacketType)
 			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((AuthenticationPacketType) minorPacketType).getClass());
 		else if (minorPacketType instanceof RoomPacketType)
@@ -72,6 +76,6 @@ public class MCPPacket
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("type", majorPacketType.toString() + "." + minorPacketType.toString());
 		jsonObject.add("data", new Gson().toJsonTree(data).getAsJsonObject().get("data"));
-		return jsonObject.toString() + "\n";
+		return jsonObject + "\n";
 	}
 }

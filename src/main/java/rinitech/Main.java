@@ -28,6 +28,10 @@ public class Main
 		config.dbpath = Parser.parse("db.path");
 		config.dbUser = Parser.parse("db.user");
 		config.dbPass = Parser.parse("db.password");
+		config.heartbeatRate = Integer.parseInt(Objects.requireNonNull(Parser.parse("miricat.heartbeat")));
+		config.httpAvatars = Boolean.parseBoolean(Parser.parse("http.avatars"));
+		config.httpImages = Boolean.parseBoolean(Parser.parse("http.images"));
+		config.httpRegistration = Boolean.parseBoolean(Parser.parse("http.registration"));
 
 		DatabaseAdapter db = new NitriteAdapter(config.dbpath, config.dbUser, config.dbPass);
 		try {

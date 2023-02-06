@@ -19,7 +19,7 @@ public class Client
 {
 	private final Scanner reader;
 	private final PrintWriter writer;
-	private String username;
+	private final String username;
 	private SecretKey secretKey;
 	private String accessToken;
 	private final EventEmitter<MCPPacket> events = new EventEmitter<>();
@@ -114,11 +114,6 @@ public class Client
 	public String getUsername()
 	{
 		return username;
-	}
-
-	public String getAccessToken()
-	{
-		return accessToken;
 	}
 
 	public EventEmitter<MCPPacket> getEvents()

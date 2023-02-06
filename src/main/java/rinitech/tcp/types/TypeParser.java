@@ -6,6 +6,7 @@ public class TypeParser
 	{
 		return switch (majorPacketType) {
 			case "Handshake" -> MajorPacketType.Handshake;
+			case "Heartbeat" -> MajorPacketType.Heartbeat;
 			case "Authentication" -> MajorPacketType.Authentication;
 			case "Message" -> MajorPacketType.Message;
 			case "Room" -> MajorPacketType.Room;
@@ -18,6 +19,7 @@ public class TypeParser
 	{
 		return switch (majorPacketType) {
 			case "Handshake" -> getHandshakePacketType(minorPacketType);
+			case "Heartbeat" -> getHeartbeatPacketType(minorPacketType);
 			case "Authentication" -> getAuthenticationPacketType(minorPacketType);
 			case "Message" -> getMessagePacketType(minorPacketType);
 			case "Room" -> getRoomPacketType(minorPacketType);
@@ -29,6 +31,12 @@ public class TypeParser
 	private static HandshakePacketType getHandshakePacketType(String minorPacketType)
 	{
 		if (minorPacketType.equals("Handshake")) return HandshakePacketType.Handshake;
+		else return null;
+	}
+
+	private static HeartbeatPacketType getHeartbeatPacketType(String minorPacketType)
+	{
+		if (minorPacketType.equals("Ping")) return HeartbeatPacketType.Ping;
 		else return null;
 	}
 
