@@ -20,7 +20,7 @@ public class Registration extends ServerResource
 			return new StringRepresentation("Bad Request");
 		}
 
-		if (Server.db.getUser(data.username) != null) {
+		if (Server.db.getUser(data.username) != null || Server.getConfig().rootUsername.equals(data.username)) {
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			return new StringRepresentation("Username already exists");
 		}

@@ -9,7 +9,7 @@ import rinitech.database.DatabaseAdapter;
 
 
 public class Server {
-	private final Config config;
+	private static Config config;
 	public static DatabaseAdapter db;
 	private final Component component;
 
@@ -45,5 +45,10 @@ public class Server {
 
 	public void stop() throws Exception {
 		component.stop();
+	}
+
+	public static Config getConfig()
+	{
+		return config;
 	}
 }
