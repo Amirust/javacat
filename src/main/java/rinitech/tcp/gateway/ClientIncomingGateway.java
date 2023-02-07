@@ -48,7 +48,7 @@ public class ClientIncomingGateway
 		switch ((AuthenticationPacketType) packet.getMinorPacketType()) {
 			case Accepted -> {
 				Accepted accepted = (Accepted) packet.getData();
-				if (accepted.data == null || accepted.data.http == null || accepted.data.rooms == null) throw new PacketDataIncorrect();
+				if (accepted.data == null || accepted.data == null || accepted.data.rooms == null) throw new PacketDataIncorrect();
 				client.getEvents().emit(ClientEvent.AuthenticationSuccess, packet);
 			}
 		}

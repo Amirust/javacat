@@ -21,7 +21,6 @@ public class Main
 	public static void main(String[] args)
 	{
 		Config config = new Config();
-		config.http = Parser.parse("miricat.http");
 		config.port = Integer.parseInt(Objects.requireNonNull(Parser.parse("miricat.port")));
 		config.rootUsername = Parser.parse("root.username");
 		config.rootPassword = Parser.parse("root.password");
