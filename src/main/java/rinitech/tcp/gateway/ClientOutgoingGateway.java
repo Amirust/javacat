@@ -19,7 +19,7 @@ public class ClientOutgoingGateway
 		handshake.data = new HandshakeData();
 		handshake.data.publicKey = Utils.byteArrayToHexString(client.getDH().generatePublicKey());
 		handshake.data.version = "2.1.0";
-		MCPPacket packet = new MCPPacket(MajorPacketType.Handshake, HandshakePacketType.Handshake, handshake);
+		MCPPacket packet = new MCPPacket(MajorPacketType.Handshake, HandshakePacketType.Handshake, handshake, Long.toString(client.getNextId()));
 		client.send(packet, false);
 	}
 
@@ -28,7 +28,7 @@ public class ClientOutgoingGateway
 		login.data = new LoginData();
 		login.data.username = username;
 		login.data.password = password;
-		MCPPacket packet = new MCPPacket(MajorPacketType.Authentication, AuthenticationPacketType.Login, login);
+		MCPPacket packet = new MCPPacket(MajorPacketType.Authentication, AuthenticationPacketType.Login, login, Long.toString(client.getNextId()));
 		client.send(packet, true);
 	}
 }

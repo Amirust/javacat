@@ -1,6 +1,6 @@
-package rinitech.database.types;
+package rinitech.tcp.packets.json;
 
-public class User
+public class UserUpdateData
 {
 	public long id;
 	public String username;

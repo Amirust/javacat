@@ -1,6 +1,5 @@
 package rinitech.tcp.errors;
 
-import org.apache.commons.lang3.NotImplementedException;
 import rinitech.tcp.packets.MCPPacket;
 
 public abstract class MCPError extends Error
@@ -16,5 +15,5 @@ public abstract class MCPError extends Error
 		return super.toString();
 	}
 
-	public abstract MCPPacket toPacket();
+	public abstract MCPPacket toPacket(String id);
 }

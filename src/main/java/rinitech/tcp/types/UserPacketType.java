@@ -6,4 +6,8 @@ public enum UserPacketType implements MinorPacketType
 	Created,
 	Delete,
 	Deleted,
+	Update,
+	Updated,
+	GetInfo,
+	Info
 }

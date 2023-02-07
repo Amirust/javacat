@@ -9,8 +9,8 @@ public class RoomAlreadyExists extends MCPError
 {
 	public RoomAlreadyExists() { super("Room already exists"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomAlreadyExists, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomAlreadyExists, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

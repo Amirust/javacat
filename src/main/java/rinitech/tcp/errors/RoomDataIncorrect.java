@@ -9,8 +9,8 @@ public class RoomDataIncorrect extends MCPError
 {
 	public RoomDataIncorrect() { super("Room data incorrect"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomDataIncorrect, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomDataIncorrect, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

@@ -9,8 +9,8 @@ public class RoomDontExists extends MCPError
 {
 	public RoomDontExists() { super("Room don't exists"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomDontExists, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.RoomDontExists, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

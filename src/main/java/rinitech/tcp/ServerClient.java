@@ -23,6 +23,7 @@ public class ServerClient extends Thread
 	private final Scanner reader;
 	private final PrintWriter writer;
 	private String username;
+	private long id;
 	private SecretKey secretKey;
 	private String accessToken;
 	private ClientStatus status = ClientStatus.Awaiting;
@@ -97,7 +98,7 @@ public class ServerClient extends Thread
 							packet = MCPPacket.parse(clientMessage);
 						}
 					} catch (Exception e) {
-						send(new PacketDataIncorrect().toPacket(), false);
+						send(new PacketDataIncorrect().toPacket("DontHaveID"), false);
 						continue;
 					}
 					ServerIncomingGateway.handle(packet, this, server);
@@ -107,7 +108,7 @@ public class ServerClient extends Thread
 				} catch (Exception ignored) {}
 			}
 		} catch (Exception e) {
-			send(new PacketDataIncorrect().toPacket(), false);
+			send(new PacketDataIncorrect().toPacket("DontHaveID"), false);
 			e.printStackTrace();
 		}
 	}
@@ -119,7 +120,7 @@ public class ServerClient extends Thread
 			while (!isClosed) {
 				int heartbeatInterval = server.getConfig().heartbeatRate;
 				if (lastHeartbeat != null && (new Date().getTime() - lastHeartbeat.getTime()) > (heartbeatInterval * 3)) {
-					send(new HeartbeatTimeout().toPacket(), false);
+					send(new HeartbeatTimeout().toPacket("DontHaveId"), false);
 					server.removeClient(this);
 					stopClient();
 				}
@@ -189,6 +190,9 @@ public class ServerClient extends Thread
 	}
 
 	public Date getLastHeartbeat() { return lastHeartbeat; }
+
+	public long getId() { return id; }
+	public void setId(long id) { this.id = id; }
 
 	public void setLastHeartbeat(Date lastHeartbeat) { this.lastHeartbeat = lastHeartbeat; }
 }

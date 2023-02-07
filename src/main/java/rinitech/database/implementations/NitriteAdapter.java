@@ -4,12 +4,8 @@ import org.dizitart.no2.Document;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.NitriteCollection;
 import rinitech.database.DatabaseAdapter;
-import rinitech.database.types.ImageMessage;
 import rinitech.database.types.Room;
-import rinitech.database.types.TextMessage;
 import rinitech.database.types.User;
-
-import java.util.Date;
 
 import static org.dizitart.no2.filters.Filters.eq;
 
@@ -39,10 +35,23 @@ public class NitriteAdapter implements DatabaseAdapter
 		return user;
 	}
 
+	public User getUser(long id)
+	{
+		Document document = users.find(eq("id", id)).firstOrDefault();
+		if (document == null) return null;
+		User user = new User();
+		user.id = document.get("id", Long.class);
+		user.username = document.get("username", String.class);
+		user.password = document.get("password", String.class);
+		user.avatar = document.get("avatar", String.class);
+		return user;
+	}
+
 	public boolean addUser(String username, String password)
 	{
 		Document doc = Document.createDocument("username", username)
-				.put("password", password);
+				.put("password", password)
+				.put("id", users.size() + 1);
 
 		try {
 			users.insert(doc);
@@ -56,6 +65,20 @@ public class NitriteAdapter implements DatabaseAdapter
 	public boolean updateUserPassword(String username, String password)
 	{
 		Document origin = users.find(eq("username", username)).firstOrDefault();
+		if (origin == null) return false;
+		origin.put("password", password);
+		try {
+			users.update(origin);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean updateUserPassword(long id, String password)
+	{
+		Document origin = users.find(eq("id", id)).firstOrDefault();
 		if (origin == null) return false;
 		origin.put("password", password);
 		try {
@@ -81,9 +104,64 @@ public class NitriteAdapter implements DatabaseAdapter
 		}
 	}
 
+	public boolean updateUserAvatar(long id, String avatar)
+	{
+		Document origin = users.find(eq("id", id)).firstOrDefault();
+		if (origin == null) return false;
+		origin.put("avatar", avatar);
+		try {
+			users.update(origin);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean updateUserUsername(String username, String newUsername)
+	{
+		Document origin = users.find(eq("username", username)).firstOrDefault();
+		if (origin == null) return false;
+		origin.put("username", newUsername);
+		try {
+			users.update(origin);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean updateUserUsername(long id, String newUsername)
+	{
+		Document origin = users.find(eq("id", id)).firstOrDefault();
+		if (origin == null) return false;
+		origin.put("username", newUsername);
+		try {
+			users.update(origin);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	public boolean deleteUser(String username)
 	{
 		Document origin = users.find(eq("username", username)).firstOrDefault();
+		if (origin == null) return false;
+		try {
+			users.remove(origin);
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean deleteUser(long id)
+	{
+		Document origin = users.find(eq("id", id)).firstOrDefault();
 		if (origin == null) return false;
 		try {
 			users.remove(origin);

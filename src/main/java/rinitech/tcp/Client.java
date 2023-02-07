@@ -25,6 +25,7 @@ public class Client
 	private final EventEmitter<MCPPacket> events = new EventEmitter<>();
 	private final DiffieHellman DH = new DiffieHellman();
 	private final IvParameterSpec iv = new IvParameterSpec(new byte[16]);
+	private long lastId = 0;
 
 	public Client(Socket serverSocket, String username, Scanner reader, PrintWriter writer, SecretKey secretKey, String accessToken) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, InvalidKeyException
 	{
@@ -124,5 +125,10 @@ public class Client
 	public DiffieHellman getDH()
 	{
 		return DH;
+	}
+
+	public long getNextId()
+	{
+		return lastId++;
 	}
 }

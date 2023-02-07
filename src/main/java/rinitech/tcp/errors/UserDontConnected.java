@@ -9,8 +9,8 @@ public class UserDontConnected extends MCPError
 {
 	public UserDontConnected() { super("User don't connected"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserDontConnected, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserDontConnected, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

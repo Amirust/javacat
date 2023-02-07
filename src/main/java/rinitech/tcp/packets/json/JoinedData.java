@@ -1,5 +1,7 @@
 package rinitech.tcp.packets.json;
 
+import rinitech.tcp.packets.SerializableUser;
+
 public class JoinedData
 {
 	/**
@@ -15,5 +17,5 @@ public class JoinedData
 	/**
 	 * The list of all users in the room.
 	 */
-	public String[] allUsers = new String[]{};
+	public SerializableUser[] allUsers = new SerializableUser[]{};
 }

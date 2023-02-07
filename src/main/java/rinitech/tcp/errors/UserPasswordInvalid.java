@@ -9,8 +9,8 @@ public class UserPasswordInvalid extends MCPError
 {
 	public UserPasswordInvalid() { super("Invalid password"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserPasswordInvalid, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserPasswordInvalid, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

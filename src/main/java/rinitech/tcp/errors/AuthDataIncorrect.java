@@ -9,8 +9,8 @@ public class AuthDataIncorrect extends MCPError
 {
 	public AuthDataIncorrect() { super("Auth data incorrect"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.AuthDataIncorrect, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.AuthDataIncorrect, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

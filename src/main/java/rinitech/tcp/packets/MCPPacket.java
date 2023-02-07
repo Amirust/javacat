@@ -11,13 +11,15 @@ public class MCPPacket
 {
 	private final MajorPacketType majorPacketType;
 	private final MinorPacketType minorPacketType;
+	private final String id;
 	private final BasePackage data;
 
-	public MCPPacket(MajorPacketType majorPacketType, MinorPacketType minorPacketType, BasePackage data)
+	public MCPPacket(MajorPacketType majorPacketType, MinorPacketType minorPacketType, BasePackage data, String id)
 	{
 		this.majorPacketType = majorPacketType;
 		this.minorPacketType = minorPacketType;
 		this.data = data;
+		this.id = id;
 	}
 
 	public static MCPPacket parse(String json)
@@ -29,8 +31,9 @@ public class MCPPacket
 
 		MajorPacketType majorPacketType = TypeParser.getMajorPacketType(types[0]);
 		MinorPacketType minorPacketType = TypeParser.getMinorPacketType(types[0], types[1]);
+		String id = types[2];
 
-		if (majorPacketType == null || minorPacketType == null)
+		if (majorPacketType == null || minorPacketType == null || id == null || id.isEmpty())
 			throw new PacketException("Invalid packet type");
 
 		BasePackage data;
@@ -55,7 +58,7 @@ public class MCPPacket
 			throw new PacketException("Invalid packet type");
 
 
-		return new MCPPacket(majorPacketType, minorPacketType, data);
+		return new MCPPacket(majorPacketType, minorPacketType, data, id);
 	}
 
 	public MajorPacketType getMajorPacketType()
@@ -73,10 +76,15 @@ public class MCPPacket
 		return data;
 	}
 
+	public String getId()
+	{
+		return id;
+	}
+
 	public String toJson()
 	{
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("type", majorPacketType.toString() + "." + minorPacketType.toString());
+		jsonObject.addProperty("type", majorPacketType.toString() + "." + minorPacketType.toString() + "." + id);
 		jsonObject.add("data", new Gson().toJsonTree(data).getAsJsonObject().get("data"));
 		return jsonObject + "\n";
 	}

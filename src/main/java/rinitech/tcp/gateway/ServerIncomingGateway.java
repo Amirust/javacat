@@ -9,6 +9,7 @@ import rinitech.tcp.errors.PacketDataIncorrect;
 import rinitech.tcp.errors.UnsupportedVersion;
 import rinitech.tcp.packets.MCPPacket;
 import rinitech.tcp.packets.SerializableRoom;
+import rinitech.tcp.packets.SerializableUser;
 import rinitech.tcp.packets.json.*;
 import rinitech.tcp.Room;
 
@@ -48,11 +49,11 @@ public class ServerIncomingGateway
 				serverClient.setStatus(ClientStatus.Handshake);
 				Handshake handshake = (Handshake) packet.getData();
 				if (handshake.data == null || handshake.data.version == null || handshake.data.publicKey == null) {
-					serverClient.send(new PacketDataIncorrect().toPacket(), false);
+					serverClient.send(new PacketDataIncorrect().toPacket(packet.getId()), false);
 					return;
 				}
 				if (!handshake.data.version.equals(server.getConfig().version)) {
-					serverClient.send(new UnsupportedVersion().toPacket(), false);
+					serverClient.send(new UnsupportedVersion().toPacket(packet.getId()), false);
 					return;
 				}
 				String hexPublicKey = handshake.data.publicKey;
@@ -71,7 +72,8 @@ public class ServerIncomingGateway
 						new MCPPacket(
 								MajorPacketType.Handshake,
 								HandshakePacketType.Handshake,
-								handshakeResponse
+								handshakeResponse,
+								packet.getId()
 						), false
 				);
 			}
@@ -102,14 +104,17 @@ public class ServerIncomingGateway
 						serverClient.setRoot(true);
 					}
 					if (user == null) {
-						serverClient.send(new rinitech.tcp.errors.UserNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.UserNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 					if (login.data.password == null || login.data.password.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.UserPasswordRequired().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.UserPasswordRequired().toPacket(packet.getId()), true);
 						break;
 					}
 					if (user.password.equals(login.data.password)) {
+						if (serverClient.isRoot()) serverClient.setId(0);
+						else serverClient.setId(user.id);
+
 						serverClient.setUsername(login.data.username);
 						serverClient.setAccessToken(Utils.generateAccessToken(serverClient.getUsername()));
 						serverClient.setStatus(ClientStatus.Connected);
@@ -127,14 +132,15 @@ public class ServerIncomingGateway
 								new MCPPacket(
 										MajorPacketType.Authentication,
 										Accepted,
-										accepted
+										accepted,
+										packet.getId()
 								), true
 						);
 						serverClient.setLastHeartbeat(new Date());
 						serverClient.createHeartbeatTimer();
 					}
 					else {
-						serverClient.send(new rinitech.tcp.errors.UserPasswordInvalid().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.UserPasswordInvalid().toPacket(packet.getId()), true);
 					}
 				}
 			}
@@ -142,11 +148,11 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Handshake) {
 					rinitech.tcp.packets.json.Register register = (Register) packet.getData();
 					if (register.data.username == null || register.data.username.isEmpty() || register.data.password == null || register.data.password.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 					if (server.getDatabase().getUser(register.data.username) != null || register.data.username.equals(server.getConfig().rootUsername)) {
-						serverClient.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(packet.getId()), true);
 						break;
 					}
 					server.getDatabase().addUser(register.data.username, register.data.password);
@@ -157,7 +163,8 @@ public class ServerIncomingGateway
 					MCPPacket packetToSend = new MCPPacket(
 							MajorPacketType.User,
 							UserPacketType.Created,
-							userCreated
+							userCreated,
+							packet.getId()
 					);
 					serverClient.send(packetToSend, true);
 				}
@@ -173,10 +180,10 @@ public class ServerIncomingGateway
 					rinitech.tcp.packets.json.CreateTextMessage createTextMessage = (CreateTextMessage) packet.getData();
 					Room room = Room.fromId(createTextMessage.rawRoom);
 					if (createTextMessage.data.text == null || createTextMessage.data.text.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					} else if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -188,7 +195,7 @@ public class ServerIncomingGateway
 					textMessage.data.user = serverClient.getUsername();
 					textMessage.rawRoom = room.getId();
 
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.TextMessage, textMessage);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.TextMessage, textMessage, "DontHaveID");
 					room.broadcast(packetToSend);
 				}
 			}
@@ -197,10 +204,10 @@ public class ServerIncomingGateway
 					rinitech.tcp.packets.json.CreateImageMessage createImageMessage = (CreateImageMessage) packet.getData();
 					Room room = Room.fromId(createImageMessage.rawRoom);
 					if ((createImageMessage.data.image == null || createImageMessage.data.image.isEmpty()) && (createImageMessage.data.url == null || createImageMessage.data.url.isEmpty())) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					} else if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -217,7 +224,7 @@ public class ServerIncomingGateway
 					imageMessage.data.user = serverClient.getUsername();
 					imageMessage.rawRoom = room.getId();
 
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.ImageMessage, imageMessage);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.ImageMessage, imageMessage, "DontHaveID");
 					room.broadcast(packetToSend);
 				}
 			}
@@ -235,12 +242,12 @@ public class ServerIncomingGateway
 							requestImageUpload.data.type == null || requestImageUpload.data.type.isEmpty() ||
 							requestImageUpload.data.size == 0
 					) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					if ((new File(".")).getUsableSpace() < requestImageUpload.data.size) {
-						MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadRejected, new ImageUploadRejected());
+						MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadRejected, new ImageUploadRejected(), packet.getId());
 						serverClient.send(packetToSend, true);
 						break;
 					}
@@ -252,7 +259,7 @@ public class ServerIncomingGateway
 						case "image/png" -> extension = ".png";
 						case "image/gif" -> extension = ".gif";
 						default -> {
-							serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+							serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 							break;
 						}
 					}
@@ -273,7 +280,7 @@ public class ServerIncomingGateway
 					imageUploadAccepted.data = new ImageUploadAcceptedData();
 					imageUploadAccepted.data.id = filename;
 
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadAccepted, imageUploadAccepted);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadAccepted, imageUploadAccepted, packet.getId());
 					server.getFileUploads().add(filename);
 					serverClient.send(packetToSend, true);
 				}
@@ -283,14 +290,14 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.ImageUploadPart imageUploadPart = (ImageUploadPart) packet.getData();
 					if (imageUploadPart.data.id == null || imageUploadPart.data.id.isEmpty() || imageUploadPart.data.data == null || imageUploadPart.data.data.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					System.out.println("Received part of file: " + imageUploadPart.data.id);
 
 					if (!server.getFileUploads().contains(imageUploadPart.data.id)) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -302,7 +309,7 @@ public class ServerIncomingGateway
 					}
 
 					if (file == null) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -316,12 +323,12 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.ImageUploadComplete imageUploadComplete = (ImageUploadComplete) packet.getData();
 					if (imageUploadComplete.data.id == null || imageUploadComplete.data.id.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					if (!server.getFileUploads().contains(imageUploadComplete.data.id)) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -333,18 +340,18 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.RequestImageDownload requestImageDownload = (RequestImageDownload) packet.getData();
 					if (requestImageDownload.data.id == null || requestImageDownload.data.id.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					Collection<File> all = new ArrayList<>(Arrays.asList(Objects.requireNonNull(new File("images/").listFiles())));
 
 					all.stream().findAny().ifPresent(file -> {
-						if (file.getName().equals(requestImageDownload.data.id)) {
+						if (file.getName().startsWith(requestImageDownload.data.id)) {
 							try {
 								String mime = Files.probeContentType(file.toPath());
 								if (mime == null) {
-									serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+									serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 									return;
 								}
 
@@ -353,17 +360,23 @@ public class ServerIncomingGateway
 								imageDownloadMeta.data.id = requestImageDownload.data.id;
 								imageDownloadMeta.data.type = mime;
 								imageDownloadMeta.data.size = (int) file.length();
-								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadMeta, imageDownloadMeta), true);
+								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadMeta, imageDownloadMeta, packet.getId()), true);
 
+								try { Thread.sleep(100); } catch (InterruptedException ignored) {}
 								FileInputStream fileInputStream = new FileInputStream(file);
-								byte[] buffer = new byte[1024];
+								byte[] buffer = new byte[4 * 1024];
 								int read;
+								int i = 0;
 								while ((read = fileInputStream.read(buffer)) != -1) {
+									i++;
 									rinitech.tcp.packets.json.ImageDownloadPart imageDownloadPart = new ImageDownloadPart();
 									imageDownloadPart.data = new ImageDownloadPartData();
 									imageDownloadPart.data.id = requestImageDownload.data.id;
 									imageDownloadPart.data.data = Base64.getEncoder().encodeToString(buffer);
-									serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadPart, imageDownloadPart), true);
+									imageDownloadPart.data.part = i;
+									System.out.println("Sending part " + i);
+									serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadPart, imageDownloadPart, packet.getId()), true);
+									try { Thread.sleep(10); } catch (InterruptedException ignored) {}
 								}
 								fileInputStream.close();
 
@@ -371,10 +384,12 @@ public class ServerIncomingGateway
 								imageDownloadCompleted.data = new ImageDownloadCompletedData();
 								imageDownloadCompleted.data.id = requestImageDownload.data.id;
 
-								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadCompleted, imageDownloadCompleted), true);
+								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadCompleted, imageDownloadCompleted, packet.getId()), true);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
+						} else {
+							serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						}
 					});
 				}
@@ -387,15 +402,15 @@ public class ServerIncomingGateway
 		switch ((UserPacketType) packet.getMinorPacketType()) {
 			case Create -> {
 				if (client.getStatus() == ClientStatus.Connected) {
-					if (!client.isRoot()) client.send(new AccessDenied().toPacket(), true);
+					if (!client.isRoot()) client.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.UserCreate createUser = (UserCreate) packet.getData();
 					if (createUser.data.username == null || createUser.data.username.isEmpty() || createUser.data.password == null || createUser.data.password.isEmpty()) {
-						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					if (server.getDatabase().getUser(createUser.data.username) != null || createUser.data.username.equals(server.getConfig().rootUsername)) {
-						client.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(), true);
+						client.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -403,21 +418,21 @@ public class ServerIncomingGateway
 					UserCreated userCreated = new UserCreated();
 					userCreated.data = new UserCreatedData();
 					userCreated.data.username = createUser.data.username;
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Created, userCreated);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Created, userCreated, packet.getId());
 					client.send(packetToSend, true);
 				}
 			}
 			case Delete -> {
 				if (client.getStatus() == ClientStatus.Connected) {
-					if (!client.isRoot()) client.send(new AccessDenied().toPacket(), true);
+					if (!client.isRoot()) client.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.UserDelete deleteUser = (UserDelete) packet.getData();
 					if (deleteUser.data.username == null || deleteUser.data.username.isEmpty()) {
-						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
 					if (server.getDatabase().getUser(deleteUser.data.username) == null) {
-						client.send(new rinitech.tcp.errors.UserNotFound().toPacket(), true);
+						client.send(new rinitech.tcp.errors.UserNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -425,7 +440,66 @@ public class ServerIncomingGateway
 					UserDeleted userDeleted = new UserDeleted();
 					userDeleted.data = new UserDeletedData();
 					userDeleted.data.username = deleteUser.data.username;
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Deleted, userDeleted);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Deleted, userDeleted, packet.getId());
+					client.send(packetToSend, true);
+				}
+			}
+			case Update -> {
+				if (client.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.UserUpdate updateUser = (UserUpdate) packet.getData();
+					String newUsername = updateUser.data.username;
+					String newPassword = updateUser.data.password;
+					String newAvatar = updateUser.data.avatar;
+					if ((newUsername == null || newUsername.isEmpty()) && (newPassword == null || newPassword.isEmpty()) && (newAvatar == null || newAvatar.isEmpty())) {
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
+						break;
+					}
+
+					if (server.getDatabase().getUser(newUsername) != null || newUsername.equals(server.getConfig().rootUsername) || newUsername.equals(client.getUsername())) {
+						client.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(packet.getId()), true);
+						break;
+					}
+
+					if (newUsername != null && !newUsername.isEmpty()) {
+						server.getDatabase().updateUserUsername(client.getUsername(), newUsername);
+					} else if (newPassword != null && !newPassword.isEmpty()) {
+						server.getDatabase().updateUserPassword(client.getUsername(), newPassword);
+					} else if (newAvatar != null && !newAvatar.isEmpty()) {
+						server.getDatabase().updateUserAvatar(client.getUsername(), newAvatar);
+					}
+
+					UserUpdated userUpdated = new UserUpdated();
+					userUpdated.data = new UserUpdatedData();
+					userUpdated.data.id = client.getId();
+					userUpdated.data.username = newUsername;
+					userUpdated.data.avatar = newAvatar;
+
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Updated, userUpdated, "DontHaveID");
+					server.getRooms().forEach((room) -> {
+						if (room.getUsers().contains(client)) room.broadcast(packetToSend);
+					});
+				}
+			}
+			case GetInfo -> {
+				if (client.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.UserGetInfo getUserInfo = (UserGetInfo) packet.getData();
+					if (getUserInfo.data.username == null || getUserInfo.data.username.isEmpty()) {
+						client.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
+						break;
+					}
+
+					User user = server.getDatabase().getUser(getUserInfo.data.username);
+					if (user == null) {
+						client.send(new rinitech.tcp.errors.UserNotFound().toPacket(packet.getId()), true);
+						break;
+					}
+
+					UserInfo userInfo = new UserInfo();
+					userInfo.data = new UserInfoData();
+					userInfo.data.id = user.id;
+					userInfo.data.username = user.username;
+					userInfo.data.avatar = user.avatar;
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.User, UserPacketType.Info, userInfo, packet.getId());
 					client.send(packetToSend, true);
 				}
 			}
@@ -437,10 +511,10 @@ public class ServerIncomingGateway
 		switch ((RoomPacketType) packet.getMinorPacketType()) {
 			case Create -> {
 				if (serverClient.getStatus() == ClientStatus.Connected) {
-					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.Create createRoom = (Create) packet.getData();
 					if (createRoom.data.name == null || createRoom.data.name.isEmpty()) {
-						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -453,42 +527,47 @@ public class ServerIncomingGateway
 					created.data = new CreatedData();
 					created.data.id = id;
 					created.data.name = createRoom.data.name;
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Created, created);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Created, created, packet.getId());
 
 					serverClient.send(packetToSend, true);
 				}
 			}
 			case Join -> {
 				if (serverClient.getStatus() == ClientStatus.Connected) {
-					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.Join joinRoom = (Join) packet.getData();
 
 					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == joinRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
 					room.getUsers().add(serverClient);
+					SerializableUser[] users = new SerializableUser[room.getUsers().size()];
+					for (int i = 0; i < room.getUsers().size(); i++) {
+						User user = server.getDatabase().getUser(room.getUsers().get(i).getId());
+						users[i] = new SerializableUser(user);
+					}
 
 					Joined joined = new Joined();
 					joined.data = new JoinedData();
 					joined.data.room = room.getId();
 					joined.data.user = serverClient.getUsername();
-					joined.data.allUsers = room.getUsers().stream().map(ServerClient::getUsername).toList().toArray(new String[0]);
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Joined, joined);
+					joined.data.allUsers = users;
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Joined, joined, "DontHaveID");
 
 					room.broadcast(packetToSend);
 				}
 			}
 			case Leave -> {
 				if (serverClient.getStatus() == ClientStatus.Connected) {
-					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.Leave leaveRoom = (Leave) packet.getData();
 
 					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == leaveRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -498,7 +577,7 @@ public class ServerIncomingGateway
 					left.data = new LeftData();
 					left.data.room = room.getId();
 					left.data.user = serverClient.getUsername();
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Left, left);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Left, left, "DontHaveID");
 
 					serverClient.send(packetToSend, true);
 					room.broadcast(packetToSend);
@@ -506,12 +585,12 @@ public class ServerIncomingGateway
 			}
 			case Update -> {
 				if (serverClient.getStatus() == ClientStatus.Connected) {
-					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.Update updateRoom = (Update) packet.getData();
 
 					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == updateRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -522,7 +601,7 @@ public class ServerIncomingGateway
 					updated.data = new UpdatedData();
 					updated.data.room = room.getId();
 					updated.data.name = room.getName();
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Updated, updated);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Updated, updated, "DontHaveID");
 
 					serverClient.send(packetToSend, true);
 					room.broadcast(packetToSend);
@@ -530,12 +609,12 @@ public class ServerIncomingGateway
 			}
 			case Delete -> {
 				if (serverClient.getStatus() == ClientStatus.Connected) {
-					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(), true);
+					if (!serverClient.isRoot()) serverClient.send(new AccessDenied().toPacket(packet.getId()), true);
 					rinitech.tcp.packets.json.Delete deleteRoom = (Delete) packet.getData();
 
 					rinitech.tcp.Room room = server.getRooms().stream().filter(r -> r.getId() == deleteRoom.data.room).findFirst().orElse(null);
 					if (room == null) {
-						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(), true);
+						serverClient.send(new rinitech.tcp.errors.RoomNotFound().toPacket(packet.getId()), true);
 						break;
 					}
 
@@ -545,7 +624,7 @@ public class ServerIncomingGateway
 					Deleted deleted = new Deleted();
 					deleted.data = new DeletedData();
 					deleted.data.room = room.getId();
-					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Deleted, deleted);
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Room, RoomPacketType.Deleted, deleted, "DontHaveID");
 
 					serverClient.send(packetToSend, true);
 					room.broadcast(packetToSend);

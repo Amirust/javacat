@@ -9,8 +9,8 @@ public class PacketDataIncorrect extends MCPError
 {
 	public PacketDataIncorrect() { super("Packet data incorrect"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.PacketDataIncorrect, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.PacketDataIncorrect, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

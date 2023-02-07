@@ -12,8 +12,8 @@ public class UserPasswordRequired extends MCPError
 		super("User password required");
 	}
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserPasswordRequired, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserPasswordRequired, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

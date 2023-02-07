@@ -9,8 +9,8 @@ public class HeartbeatTimeout extends MCPError
 {
 	public HeartbeatTimeout() { super("Heartbeat Timeout"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.HeartbeatTimeout, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.HeartbeatTimeout, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

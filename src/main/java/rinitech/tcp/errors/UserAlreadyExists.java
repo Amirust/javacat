@@ -9,8 +9,8 @@ public class UserAlreadyExists extends MCPError
 {
 	public UserAlreadyExists() { super("User already exists"); }
 
-	public MCPPacket toPacket()
+	public MCPPacket toPacket(String id)
 	{
-		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserAlreadyExists, new BaseErrorPackage(this.getMessage()));
+		return new MCPPacket(MajorPacketType.Error, ErrorPacketType.UserAlreadyExists, new BaseErrorPackage(this.getMessage()), id);
 	}
 }

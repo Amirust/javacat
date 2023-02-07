@@ -84,7 +84,13 @@ public class TypeParser
 	{
 		return switch (minorPacketType) {
 			case "Create" -> UserPacketType.Create;
+			case "Created" -> UserPacketType.Created;
 			case "Delete" -> UserPacketType.Delete;
+			case "Deleted" -> UserPacketType.Deleted;
+			case "Update" -> UserPacketType.Update;
+			case "Updated" -> UserPacketType.Updated;
+			case "GetInfo" -> UserPacketType.GetInfo;
+			case "Info" -> UserPacketType.Info;
 			default -> null;
 		};
 	}
