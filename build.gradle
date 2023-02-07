@@ -17,9 +17,6 @@ dependencies {
     implementation 'org.dizitart:nitrite:3.4.4'
     implementation 'org.snf4j:snf4j-core-slf4j:1.10.0'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.restlet.jse:org.restlet:2.5-M1'
-    implementation 'org.restlet.jse:org.restlet.ext.json:2.5-M1'
-    implementation 'org.restlet.jse:org.restlet.ext.fileupload:2.5-M1'
 }
 
 jar {
