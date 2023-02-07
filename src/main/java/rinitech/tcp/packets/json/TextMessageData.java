@@ -7,7 +7,7 @@ public class TextMessageData
 	/**
 	 * The message.
 	 */
-	public String message;
+	public String text;
 	/**
 	 * The username who sent the message.
 	 */

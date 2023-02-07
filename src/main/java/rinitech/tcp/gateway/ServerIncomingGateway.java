@@ -166,7 +166,7 @@ public class ServerIncomingGateway
 					rinitech.tcp.packets.json.TextMessage textMessage = new rinitech.tcp.packets.json.TextMessage();
 					textMessage.data = new TextMessageData();
 
-					textMessage.data.message = createTextMessage.data.text;
+					textMessage.data.text = createTextMessage.data.text;
 					textMessage.data.rawTime = new Date().getTime();
 					textMessage.data.user = serverClient.getUsername();
 					textMessage.rawRoom = room.getId();

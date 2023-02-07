@@ -100,7 +100,7 @@ public class ClientIncomingGateway
 		switch ((MessagePacketType) packet.getMinorPacketType()) {
 			case TextMessage -> {
 				TextMessage textMessage = (TextMessage) packet.getData();
-				if (textMessage.data == null || textMessage.data.message == null || textMessage.data.user == null || textMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
+				if (textMessage.data == null || textMessage.data.text == null || textMessage.data.user == null || textMessage.data.rawTime <= 0) throw new PacketDataIncorrect();
 				client.getEvents().emit(ClientEvent.TextMessage, packet);
 			}
 			case ImageMessage -> {
