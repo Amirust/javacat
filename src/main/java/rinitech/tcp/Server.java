@@ -16,6 +16,7 @@ public class Server
 	private final ServerSocket serverSocket;
 	private static final ArrayList<ServerClient> serverClients = new ArrayList<>();
 	private static final ArrayList<Room> rooms = new ArrayList<>();
+	private final ArrayList<String> fileUploads = new ArrayList<>();
 	private final DiffieHellman DH = new DiffieHellman();
 	private final DatabaseAdapter database;
 	private final Config config;
@@ -95,5 +96,10 @@ public class Server
 	public Config getConfig()
 	{
 		return config;
+	}
+
+	public ArrayList<String> getFileUploads()
+	{
+		return fileUploads;
 	}
 }

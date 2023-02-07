@@ -15,11 +15,7 @@ import rinitech.tcp.errors.HeartbeatTimeout;
 import rinitech.tcp.errors.PacketDataIncorrect;
 import rinitech.tcp.gateway.ServerIncomingGateway;
 import rinitech.tcp.packets.MCPPacket;
-import rinitech.tcp.packets.json.UpdateAccessToken;
-import rinitech.tcp.packets.json.UpdateAccessTokenData;
-import rinitech.tcp.types.AuthenticationPacketType;
 import rinitech.tcp.types.ClientStatus;
-import rinitech.tcp.types.MajorPacketType;
 
 public class ServerClient extends Thread
 {
@@ -116,25 +112,7 @@ public class ServerClient extends Thread
 		}
 	}
 
-	public void createUpdateAccessTokenTimer() {
-		new Thread(() -> {
-			while (!isClosed) {
-				try {
-					Thread.sleep(60 * 1000 * 10);
-					String newAccessToken = Utils.generateAccessToken(username);
-					UpdateAccessToken updateAccessToken = new UpdateAccessToken();
-					updateAccessToken.data = new UpdateAccessTokenData();
-					updateAccessToken.data.accessToken = newAccessToken;
-					MCPPacket packet = new MCPPacket(
-							MajorPacketType.Authentication,
-							AuthenticationPacketType.UpdateAccessToken,
-							updateAccessToken
-					);
-					send(packet, true);
-				} catch (InterruptedException ignored) {}
-			}
-		}).start();
-	}
+
 
 	public void createHeartbeatTimer() {
 		new Thread(() -> {

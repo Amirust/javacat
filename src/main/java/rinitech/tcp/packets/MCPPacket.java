@@ -47,6 +47,8 @@ public class MCPPacket
 			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((RoomPacketType) minorPacketType).getClass());
 		else if (minorPacketType instanceof MessagePacketType)
 			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((MessagePacketType) minorPacketType).getClass());
+		else if (minorPacketType instanceof FilePacketType)
+			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((FilePacketType) minorPacketType).getClass());
 		else if (minorPacketType instanceof ErrorPacketType)
 			data = new Gson().fromJson(jsonObject, PacketTypeUtils.getPacketByType((ErrorPacketType) minorPacketType).getClass());
 		else

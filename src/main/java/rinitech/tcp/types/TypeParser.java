@@ -9,6 +9,7 @@ public class TypeParser
 			case "Heartbeat" -> MajorPacketType.Heartbeat;
 			case "Authentication" -> MajorPacketType.Authentication;
 			case "Message" -> MajorPacketType.Message;
+			case "File" -> MajorPacketType.File;
 			case "User" -> MajorPacketType.User;
 			case "Room" -> MajorPacketType.Room;
 			case "Error" -> MajorPacketType.Error;
@@ -23,6 +24,7 @@ public class TypeParser
 			case "Heartbeat" -> getHeartbeatPacketType(minorPacketType);
 			case "Authentication" -> getAuthenticationPacketType(minorPacketType);
 			case "Message" -> getMessagePacketType(minorPacketType);
+			case "File" -> getFilePacketType(minorPacketType);
 			case "User" -> getUserPacketType(minorPacketType);
 			case "Room" -> getRoomPacketType(minorPacketType);
 			case "Error" -> getErrorPacketType(minorPacketType);
@@ -47,7 +49,6 @@ public class TypeParser
 		return switch (minorPacketType) {
 			case "Login" -> AuthenticationPacketType.Login;
 			case "Accepted" -> AuthenticationPacketType.Accepted;
-			case "UpdateAccessToken" -> AuthenticationPacketType.UpdateAccessToken;
 			default -> null;
 		};
 	}
@@ -59,6 +60,22 @@ public class TypeParser
 			case "TextMessage" -> MessagePacketType.TextMessage;
 			case "CreateImageMessage" -> MessagePacketType.CreateImageMessage;
 			case "ImageMessage" -> MessagePacketType.ImageMessage;
+			default -> null;
+		};
+	}
+
+	private static FilePacketType getFilePacketType(String minorPacketType)
+	{
+		return switch (minorPacketType) {
+			case "RequestImageUpload" -> FilePacketType.RequestImageUpload;
+			case "ImageUploadAccepted" -> FilePacketType.ImageUploadAccepted;
+			case "ImageUploadRejected" -> FilePacketType.ImageUploadRejected;
+			case "ImageUploadPart" -> FilePacketType.ImageUploadPart;
+			case "ImageUploadCompleted" -> FilePacketType.ImageUploadCompleted;
+			case "RequestImageDownload" -> FilePacketType.RequestImageDownload;
+			case "ImageDownloadMeta" -> FilePacketType.ImageDownloadMeta;
+			case "ImageDownloadPart" -> FilePacketType.ImageDownloadPart;
+			case "ImageDownloadCompleted" -> FilePacketType.ImageDownloadCompleted;
 			default -> null;
 		};
 	}

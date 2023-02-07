@@ -9,7 +9,7 @@ public class PacketTypeUtils
 		return switch (type) {
 			case Login -> new rinitech.tcp.packets.json.Login();
 			case Accepted -> new rinitech.tcp.packets.json.Accepted();
-			case UpdateAccessToken -> new rinitech.tcp.packets.json.UpdateAccessToken();
+			case Register -> new rinitech.tcp.packets.json.Register();
 		};
 	}
 
@@ -62,6 +62,21 @@ public class PacketTypeUtils
 			case TextMessage -> new rinitech.tcp.packets.json.TextMessage();
 			case CreateImageMessage -> new rinitech.tcp.packets.json.CreateImageMessage();
 			case ImageMessage -> new rinitech.tcp.packets.json.ImageMessage();
+		};
+	}
+
+	public static BasePackage getPacketByType(FilePacketType type)
+	{
+		return switch (type) {
+			case RequestImageUpload -> new rinitech.tcp.packets.json.RequestImageUpload();
+			case ImageUploadAccepted -> new rinitech.tcp.packets.json.ImageUploadAccepted();
+			case ImageUploadRejected -> new rinitech.tcp.packets.json.ImageUploadRejected();
+			case ImageUploadPart -> new rinitech.tcp.packets.json.ImageUploadPart();
+			case ImageUploadCompleted -> new rinitech.tcp.packets.json.ImageUploadComplete();
+			case RequestImageDownload -> new rinitech.tcp.packets.json.RequestImageDownload();
+			case ImageDownloadMeta -> new rinitech.tcp.packets.json.ImageDownloadMeta();
+			case ImageDownloadPart -> new rinitech.tcp.packets.json.ImageDownloadPart();
+			case ImageDownloadCompleted -> new rinitech.tcp.packets.json.ImageDownloadCompleted();
 		};
 	}
 

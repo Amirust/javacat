@@ -7,6 +7,7 @@ public enum MajorPacketType
 	Heartbeat,
 	Authentication,
 	Message,
+	File,
 	User,
 	Room,
 	Error

@@ -14,22 +14,28 @@ import rinitech.tcp.Room;
 
 import static rinitech.tcp.types.AuthenticationPacketType.*;
 
+import rinitech.tcp.packets.json.List;
 import rinitech.tcp.types.*;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.*;
+import java.security.*;
 
 public class ServerIncomingGateway
 {
-	public static void handle(MCPPacket packet, ServerClient serverClient, Server server)
+	public static void handle(MCPPacket packet, ServerClient serverClient, Server server) throws NoSuchAlgorithmException, IOException
 	{
 		switch (packet.getMajorPacketType()) {
 			case Handshake -> handleHandshake(packet, serverClient, server);
 			case Heartbeat -> handleHeartbeat(packet, serverClient, server);
 			case Authentication -> handleAuthentication(packet, serverClient, server);
 			case Message -> handleMessage(packet, serverClient, server);
+			case File -> handleFile(packet, serverClient, server);
 			case User -> handleUser(packet, serverClient, server);
 			case Room -> handleRoom(packet, serverClient, server);
 		}
@@ -45,7 +51,7 @@ public class ServerIncomingGateway
 					serverClient.send(new PacketDataIncorrect().toPacket(), false);
 					return;
 				}
-				if (!handshake.data.version.equals("2.0.0")) {
+				if (!handshake.data.version.equals(server.getConfig().version)) {
 					serverClient.send(new UnsupportedVersion().toPacket(), false);
 					return;
 				}
@@ -57,7 +63,7 @@ public class ServerIncomingGateway
 				SecretKey secretKey = Utils.generateSecretKey(base64SharedKey);
 				Handshake handshakeResponse = new Handshake();
 				handshakeResponse.data = new HandshakeData();
-				handshakeResponse.data.version = "2.0.0";
+				handshakeResponse.data.version = server.getConfig().version;
 				handshakeResponse.data.publicKey = Utils.byteArrayToHexString(server.getDH().generatePublicKey());
 
 				serverClient.setSecretKey(secretKey);
@@ -116,7 +122,6 @@ public class ServerIncomingGateway
 						}
 
 						accepted.data.rooms = rooms.toArray(new SerializableRoom[0]);
-						accepted.data.http = server.getConfig().http;
 						accepted.data.heartbeatRate = server.getConfig().heartbeatRate;
 						serverClient.send(
 								new MCPPacket(
@@ -125,24 +130,36 @@ public class ServerIncomingGateway
 										accepted
 								), true
 						);
-
-						rinitech.tcp.packets.json.UpdateAccessToken updateAccessToken = new rinitech.tcp.packets.json.UpdateAccessToken();
-						updateAccessToken.data = new UpdateAccessTokenData();
-						updateAccessToken.data.accessToken = serverClient.getAccessToken();
-						serverClient.send(
-								new MCPPacket(
-										MajorPacketType.Authentication,
-										UpdateAccessToken,
-										updateAccessToken
-								), true
-						);
-						serverClient.createUpdateAccessTokenTimer();
 						serverClient.setLastHeartbeat(new Date());
 						serverClient.createHeartbeatTimer();
 					}
 					else {
 						serverClient.send(new rinitech.tcp.errors.UserPasswordInvalid().toPacket(), true);
 					}
+				}
+			}
+			case Register -> {
+				if (serverClient.getStatus() == ClientStatus.Handshake) {
+					rinitech.tcp.packets.json.Register register = (Register) packet.getData();
+					if (register.data.username == null || register.data.username.isEmpty() || register.data.password == null || register.data.password.isEmpty()) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+					if (server.getDatabase().getUser(register.data.username) != null || register.data.username.equals(server.getConfig().rootUsername)) {
+						serverClient.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(), true);
+						break;
+					}
+					server.getDatabase().addUser(register.data.username, register.data.password);
+					UserCreated userCreated = new UserCreated();
+					userCreated.data = new UserCreatedData();
+					userCreated.data.username = register.data.username;
+
+					MCPPacket packetToSend = new MCPPacket(
+							MajorPacketType.User,
+							UserPacketType.Created,
+							userCreated
+					);
+					serverClient.send(packetToSend, true);
 				}
 			}
 		}
@@ -179,7 +196,7 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.CreateImageMessage createImageMessage = (CreateImageMessage) packet.getData();
 					Room room = Room.fromId(createImageMessage.rawRoom);
-					if (createImageMessage.data.image == null || createImageMessage.data.image.isEmpty()) {
+					if ((createImageMessage.data.image == null || createImageMessage.data.image.isEmpty()) && (createImageMessage.data.url == null || createImageMessage.data.url.isEmpty())) {
 						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
 						break;
 					} else if (room == null) {
@@ -187,16 +204,179 @@ public class ServerIncomingGateway
 						break;
 					}
 
+
 					rinitech.tcp.packets.json.ImageMessage imageMessage = new rinitech.tcp.packets.json.ImageMessage();
 					imageMessage.data = new ImageMessageData();
 
-					imageMessage.data.image = createImageMessage.data.image;
+					if (createImageMessage.data.image != null && !createImageMessage.data.image.isEmpty()) {
+						imageMessage.data.image = createImageMessage.data.image;
+					} else {
+						imageMessage.data.image = createImageMessage.data.url;
+					}
 					imageMessage.data.rawTime = new Date().getTime();
 					imageMessage.data.user = serverClient.getUsername();
 					imageMessage.rawRoom = room.getId();
 
 					MCPPacket packetToSend = new MCPPacket(MajorPacketType.Message, MessagePacketType.ImageMessage, imageMessage);
 					room.broadcast(packetToSend);
+				}
+			}
+		}
+	}
+
+	private static void handleFile(MCPPacket packet, ServerClient serverClient, Server server) throws NoSuchAlgorithmException, IOException
+	{
+		switch ((FilePacketType) packet.getMinorPacketType()) {
+			case RequestImageUpload -> {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.RequestImageUpload requestImageUpload = (RequestImageUpload) packet.getData();
+					if (
+							requestImageUpload.data.name == null || requestImageUpload.data.name.isEmpty() ||
+							requestImageUpload.data.type == null || requestImageUpload.data.type.isEmpty() ||
+							requestImageUpload.data.size == 0
+					) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					if ((new File(".")).getUsableSpace() < requestImageUpload.data.size) {
+						MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadRejected, new ImageUploadRejected());
+						serverClient.send(packetToSend, true);
+						break;
+					}
+
+					String extension = "";
+					System.out.println(requestImageUpload.data.type);
+					switch (requestImageUpload.data.type) {
+						case "image/jpeg" -> extension = ".jpg";
+						case "image/png" -> extension = ".png";
+						case "image/gif" -> extension = ".gif";
+						default -> {
+							serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+							break;
+						}
+					}
+					if (extension.isEmpty())
+						break;
+
+					String filename = Utils.byteArrayToHexString(MessageDigest.getInstance("MD5").digest(requestImageUpload.data.name.getBytes()));
+
+					File file = new File("images/" + filename + extension);
+					if (file.exists())
+						filename += "-" + new Date().getTime();
+
+					System.out.println("Creating file: " + filename + extension);
+					file = new File("images/" + filename + extension);
+					file.createNewFile();
+
+					rinitech.tcp.packets.json.ImageUploadAccepted imageUploadAccepted = new ImageUploadAccepted();
+					imageUploadAccepted.data = new ImageUploadAcceptedData();
+					imageUploadAccepted.data.id = filename;
+
+					MCPPacket packetToSend = new MCPPacket(MajorPacketType.File, FilePacketType.ImageUploadAccepted, imageUploadAccepted);
+					server.getFileUploads().add(filename);
+					serverClient.send(packetToSend, true);
+				}
+			}
+
+			case ImageUploadPart -> {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.ImageUploadPart imageUploadPart = (ImageUploadPart) packet.getData();
+					if (imageUploadPart.data.id == null || imageUploadPart.data.id.isEmpty() || imageUploadPart.data.data == null || imageUploadPart.data.data.isEmpty()) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					System.out.println("Received part of file: " + imageUploadPart.data.id);
+
+					if (!server.getFileUploads().contains(imageUploadPart.data.id)) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					Collection<File> all = new ArrayList<>(Arrays.asList(Objects.requireNonNull(new File("images/").listFiles())));
+					File file = null;
+
+					for (File fileI : all) {
+						if (fileI.getName().startsWith(imageUploadPart.data.id)) file = fileI;
+					}
+
+					if (file == null) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+					fileOutputStream.write(Base64.getDecoder().decode(imageUploadPart.data.data));
+					fileOutputStream.close();
+				}
+			}
+
+			case ImageUploadCompleted -> {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.ImageUploadComplete imageUploadComplete = (ImageUploadComplete) packet.getData();
+					if (imageUploadComplete.data.id == null || imageUploadComplete.data.id.isEmpty()) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					if (!server.getFileUploads().contains(imageUploadComplete.data.id)) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					server.getFileUploads().remove(imageUploadComplete.data.id);
+				}
+			}
+
+			case RequestImageDownload -> {
+				if (serverClient.getStatus() == ClientStatus.Connected) {
+					rinitech.tcp.packets.json.RequestImageDownload requestImageDownload = (RequestImageDownload) packet.getData();
+					if (requestImageDownload.data.id == null || requestImageDownload.data.id.isEmpty()) {
+						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+						break;
+					}
+
+					Collection<File> all = new ArrayList<>(Arrays.asList(Objects.requireNonNull(new File("images/").listFiles())));
+
+					all.stream().findAny().ifPresent(file -> {
+						if (file.getName().equals(requestImageDownload.data.id)) {
+							try {
+								String mime = Files.probeContentType(file.toPath());
+								if (mime == null) {
+									serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
+									return;
+								}
+
+								rinitech.tcp.packets.json.ImageDownloadMeta imageDownloadMeta = new ImageDownloadMeta();
+								imageDownloadMeta.data = new ImageDownloadMetaData();
+								imageDownloadMeta.data.id = requestImageDownload.data.id;
+								imageDownloadMeta.data.type = mime;
+								imageDownloadMeta.data.size = (int) file.length();
+								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadMeta, imageDownloadMeta), true);
+
+								FileInputStream fileInputStream = new FileInputStream(file);
+								byte[] buffer = new byte[1024];
+								int read;
+								while ((read = fileInputStream.read(buffer)) != -1) {
+									rinitech.tcp.packets.json.ImageDownloadPart imageDownloadPart = new ImageDownloadPart();
+									imageDownloadPart.data = new ImageDownloadPartData();
+									imageDownloadPart.data.id = requestImageDownload.data.id;
+									imageDownloadPart.data.data = Base64.getEncoder().encodeToString(buffer);
+									serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadPart, imageDownloadPart), true);
+								}
+								fileInputStream.close();
+
+								rinitech.tcp.packets.json.ImageDownloadCompleted imageDownloadCompleted = new ImageDownloadCompleted();
+								imageDownloadCompleted.data = new ImageDownloadCompletedData();
+								imageDownloadCompleted.data.id = requestImageDownload.data.id;
+
+								serverClient.send(new MCPPacket(MajorPacketType.File, FilePacketType.ImageDownloadCompleted, imageDownloadCompleted), true);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
 				}
 			}
 		}
@@ -214,7 +394,7 @@ public class ServerIncomingGateway
 						break;
 					}
 
-					if (server.getDatabase().getUser(createUser.data.username) != null) {
+					if (server.getDatabase().getUser(createUser.data.username) != null || createUser.data.username.equals(server.getConfig().rootUsername)) {
 						client.send(new rinitech.tcp.errors.UserAlreadyExists().toPacket(), true);
 						break;
 					}

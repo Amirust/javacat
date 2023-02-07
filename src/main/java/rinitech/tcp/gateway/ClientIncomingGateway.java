@@ -29,7 +29,7 @@ public class ClientIncomingGateway
 			case Handshake -> {
 				Handshake handshake = (Handshake) packet.getData();
 				if (handshake.data == null || handshake.data.version == null || handshake.data.publicKey == null) throw new PacketDataIncorrect();
-				if (!handshake.data.version.equals("2.0.0")) throw new UnsupportedVersion();
+				if (!handshake.data.version.equals("2.1.0")) throw new UnsupportedVersion();
 
 				byte[] publicKey = Utils.hexStringToByteArray(handshake.data.publicKey);
 				byte[] sharedKey = client.getDH().generateSharedSecret(publicKey);
@@ -50,11 +50,6 @@ public class ClientIncomingGateway
 				Accepted accepted = (Accepted) packet.getData();
 				if (accepted.data == null || accepted.data.http == null || accepted.data.rooms == null) throw new PacketDataIncorrect();
 				client.getEvents().emit(ClientEvent.AuthenticationSuccess, packet);
-			}
-			case UpdateAccessToken -> {
-				UpdateAccessToken updateAccessToken = (UpdateAccessToken) packet.getData();
-				if (updateAccessToken.data == null || updateAccessToken.data.accessToken == null) throw new PacketDataIncorrect();
-				client.setAccessToken(updateAccessToken.data.accessToken);
 			}
 		}
 	}
