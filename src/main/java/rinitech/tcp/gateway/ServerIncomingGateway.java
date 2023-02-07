@@ -172,7 +172,7 @@ public class ServerIncomingGateway
 				if (serverClient.getStatus() == ClientStatus.Connected) {
 					rinitech.tcp.packets.json.CreateTextMessage createTextMessage = (CreateTextMessage) packet.getData();
 					Room room = Room.fromId(createTextMessage.rawRoom);
-					if (createTextMessage.data.message == null || createTextMessage.data.message.isEmpty()) {
+					if (createTextMessage.data.text == null || createTextMessage.data.text.isEmpty()) {
 						serverClient.send(new rinitech.tcp.errors.PacketDataIncorrect().toPacket(), true);
 						break;
 					} else if (room == null) {
@@ -183,7 +183,7 @@ public class ServerIncomingGateway
 					rinitech.tcp.packets.json.TextMessage textMessage = new rinitech.tcp.packets.json.TextMessage();
 					textMessage.data = new TextMessageData();
 
-					textMessage.data.message = createTextMessage.data.message;
+					textMessage.data.message = createTextMessage.data.text;
 					textMessage.data.rawTime = new Date().getTime();
 					textMessage.data.user = serverClient.getUsername();
 					textMessage.rawRoom = room.getId();

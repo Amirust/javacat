@@ -8,5 +8,5 @@ public class CreateTextMessageData
 	 * The message.
 	 */
 	@SerializedName("text")
-	public String message;
+	public String text;
 }
